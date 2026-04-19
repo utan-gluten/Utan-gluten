@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bageri utan gluten – Beställ</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #0f1a14;
+  --warm: #172412;
+  --brown: #4cbe82;
+  --caramel: #5dd496;
+  --caramel-light: #7aeaae;
+  --text: #e8f5ee;
+  --muted: #8abf9e;
+  --border: #2a4a38;
+  --success: #5dd496;
+  --danger: #ff6b6b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #0f1a14; color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+.header { background: #0a120d; color: var(--cream); padding: 2rem 1.5rem 1.5rem; text-align: center; }
+.header h1 { font-family: 'Cormorant Garamond', serif; font-size: 2.6rem; font-weight: 600; letter-spacing: 0.04em; font-style: italic; line-height: 1.1; }
+.header-sub { font-size: 0.88rem; opacity: 1.0; color: rgba(255,255,255,0.95); margin-top: 0.3rem; font-weight: 300; }
+.header-ig {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  margin-top: 0.75rem; color: rgba(255,255,255,0.95);
+  text-decoration: none; font-size: 0.82rem;
+  border: 1px solid rgba(255,255,255,0.6);
+  padding: 0.3rem 0.85rem; border-radius: 20px; transition: all 0.15s;
+}
+.header-ig:hover { color: white; border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08); }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* LAYOUT */
+.container { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
+.section-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; color: #c8f0d8;
+  margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);
+}
+
+/* PRODUCT CARDS */
+.products-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
+.product-card {
+  background: #182b20; border: 1px solid var(--border); border-radius: 12px;
+  padding: 1rem 1.25rem; display: flex; align-items: center;
+  justify-content: space-between; gap: 1rem; transition: box-shadow 0.2s;
+}
+.product-card:hover { box-shadow: 0 2px 12px rgba(30,92,58,0.08); }
+.product-card.sold-out { opacity: 0.5; pointer-events: none; }
+.product-info { flex: 1; }
+.product-name { font-weight: 500; font-size: 1rem; color: var(--brown); }
+.product-price { font-size: 0.9rem; color: #7aeaae; margin-top: 0.15rem; font-weight: 700; }
+.product-stock { font-size: 0.75rem; color: #8abf9e; margin-top: 0.1rem; }
+.sold-out-badge { font-size: 0.7rem; background: #3a1a1a; color: var(--danger); padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 500; }
+.qty-control { display: flex; align-items: center; gap: 0.5rem; }
+.qty-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--caramel); background: white; color: var(--caramel);
+  font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+}
+.qty-btn:hover:not(:disabled) { background: var(--caramel); color: white; }
+.qty-btn:disabled { border-color: var(--border); color: var(--border); cursor: default; }
+.qty-num { min-width: 24px; text-align: center; font-weight: 500; font-size: 1rem; }
+
+/* FORM */
+.form-group { margin-bottom: 1.1rem; }
+label { display: block; font-size: 0.8rem; font-weight: 600; color: #8abf9e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+input, select, textarea {
+  width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem; background: #182b20; color: var(--text);
+  transition: border-color 0.2s; -webkit-appearance: none; appearance: none;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--caramel); }
+input.error, select.error { border-color: var(--danger); }
+.field-error { font-size: 0.78rem; color: var(--danger); margin-top: 0.3rem; display: none; }
+.field-error.show { display: block; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b9c7e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.9rem center; padding-right: 2.2rem;
+}
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* ORDER SUMMARY */
+.order-summary { background: #172412; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.summary-line { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem; color: var(--text); }
+.summary-total { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-weight: 500; font-size: 1rem; }
+.empty-cart { color: var(--muted); font-size: 0.9rem; font-style: italic; }
+
+/* SWISH */
+.swish-box { background: #1f2e18; border: 1.5px solid #4a6e38; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 0.9rem; color: var(--text); line-height: 1.5; }
+.swish-number { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.03em; display: block; margin-top: 0.2rem; }
+
+/* BUTTONS */
+.btn-primary {
+  width: 100%; padding: 0.9rem; background: var(--caramel); color: white; border: none;
+  border-radius: 10px; font-family: 'Playfair Display', serif; font-size: 1.05rem;
+  cursor: pointer; transition: background 0.2s, transform 0.1s; letter-spacing: 0.02em;
+}
+.btn-primary:hover:not(:disabled) { background: var(--brown); }
+.btn-primary:active:not(:disabled) { transform: scale(0.99); }
+.btn-primary:disabled { background: var(--border); cursor: not-allowed; opacity: 0.6; }
+.btn-secondary {
+  padding: 0.6rem 1.5rem; background: #182b20; border: 1.5px solid var(--caramel);
+  color: var(--caramel); border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem; cursor: pointer; transition: all 0.15s;
+}
+.btn-secondary:hover { background: var(--caramel); color: white; }
+
+/* SUCCESS */
+.success-box { background: #172412; border: 1px solid #2a4a38; border-radius: 12px; padding: 1.75rem 1.5rem; text-align: center; margin-top: 1rem; }
+.success-box h2 { font-family: 'Playfair Display', serif; color: var(--success); margin-bottom: 0.5rem; font-size: 1.5rem; }
+.success-box p { font-size: 0.9rem; color: #8abf9e; margin-bottom: 0.4rem; }
+.success-swish { background: #0f1a14; border: 1px solid #2a4a38; border-radius: 8px; padding: 0.85rem 1rem; margin: 1rem 0; text-align: left; }
+.success-swish strong { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8abf9e; margin-bottom: 0.2rem; }
+.success-swish span { font-size: 1.1rem; font-weight: 600; color: #c8f0d8; }
+
+/* FOOTER ADMIN */
+.footer-admin { text-align: center; padding: 2.5rem 0 1.5rem; }
+.footer-admin button { background: none; border: none; color: #2a4a38; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: color 0.2s; }
+.footer-admin button:hover { color: var(--muted); }
+
+
+/* BREAD BACKGROUND PATTERN */
+.bg-pattern {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; opacity: 0.07;
+}
+.container, .header { position: relative; z-index: 1; }
+
+/* BREAD SUBMIT BUTTON */
+.btn-bread {
+  width: 100%; padding: 1rem 1.5rem;
+  background: #3a9e68; color: #0a120d; border: none;
+  border-radius: 40px 40px 36px 36px; box-shadow: 0 4px 16px rgba(15,61,34,0.35);
+  font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600;
+  cursor: pointer; transition: background 0.2s, transform 0.12s;
+  letter-spacing: 0.03em; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+}
+.btn-bread::before {
+  content: '';
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  width: 70%; height: 3px;
+  background: rgba(255,255,255,0.18); border-radius: 2px;
+}
+.btn-bread::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
+  background: rgba(0,0,0,0.12); border-radius: 0 0 36px 36px;
+}
+.btn-bread:hover:not(:disabled) { background: #163f28; transform: translateY(-1px); }
+.btn-bread:active:not(:disabled) { transform: scale(0.98); }
+.btn-bread:disabled { background: #9dcab5; cursor: not-allowed; color: rgba(255,255,255,0.7); opacity: 1; }
+
+/* ADMIN LOGIN */
+.login-box { max-width: 360px; margin: 4rem auto; background: #182b20; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 24px rgba(30,92,58,0.1); text-align: center; }
+.login-box h2 { font-family: 'Playfair Display', serif; margin-bottom: 1.5rem; color: var(--brown); }
+.login-box input { margin-bottom: 1rem; }
+.login-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.5rem; }
+
+/* ADMIN PANEL */
+.admin-header { background: #0a120d; color: white; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.admin-header h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
+.admin-tabs { display: flex; background: #0f1a14; border-bottom: 2px solid var(--border); }
+.tab-btn { padding: 0.75rem 1.5rem; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.tab-btn.active { color: var(--caramel); border-bottom-color: var(--caramel); font-weight: 500; }
+.admin-content { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
+
+/* ORDERS */
+.orders-list { display: flex; flex-direction: column; gap: 1rem; }
+.order-card { background: #182b20; border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; }
+.order-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+.order-customer { font-weight: 500; color: var(--brown); }
+.order-meta { font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
+.order-time-badge { background: var(--warm); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; color: var(--brown); font-weight: 500; white-space: nowrap; }
+.order-items { font-size: 0.88rem; color: var(--text); }
+.order-items span { display: inline-block; margin-right: 1rem; }
+.order-total { margin-top: 0.5rem; font-weight: 500; font-size: 0.9rem; color: var(--caramel); }
+.order-note { margin-top: 0.4rem; font-size: 0.82rem; color: var(--muted); font-style: italic; }
+.order-delete { background: none; border: 1px solid #f0c0bc; color: var(--danger); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; margin-top: 0.75rem; font-family: 'DM Sans', sans-serif; }
+.order-delete:hover { background: #fdf0ee; }
+.no-orders { text-align: center; padding: 3rem; color: var(--muted); font-style: italic; }
+
+/* PRODUCT MANAGEMENT */
+.product-manage-card { background: #182b20; border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+.product-manage-row { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
+.product-manage-row .form-group { margin-bottom: 0; flex: 1; min-width: 120px; }
+.product-manage-row .form-group.sm { max-width: 100px; }
+.unsaved-banner { background: #2a2200; border: 1px solid #806000; border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.82rem; color: #f0d060; margin-bottom: 1rem; display: none; }
+.unsaved-banner.show { display: block; }
+
+/* SETTINGS */
+.settings-card { background: #182b20; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+.settings-card h3 { font-family: 'Playfair Display', serif; margin-bottom: 1rem; color: var(--brown); }
+.time-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+.chip { padding: 0.3rem 0.8rem; border-radius: 20px; background: var(--warm); border: 1px solid var(--border); font-size: 0.82rem; display: flex; align-items: center; gap: 0.4rem; }
+.chip-remove { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.9rem; padding: 0; line-height: 1; }
+.chip-remove:hover { color: var(--danger); }
+.add-time-row { display: flex; gap: 0.5rem; }
+.add-time-row input { flex: 1; }
+.weekday-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.day-toggle { padding: 0.4rem 0.75rem; border-radius: 20px; border: 1.5px solid var(--border); background: white; font-size: 0.82rem; cursor: pointer; color: var(--muted); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.day-toggle.active { background: var(--caramel); color: white; border-color: var(--caramel); }
+
+/* MISC BUTTONS */
+.btn-danger { padding: 0.65rem 1rem; background: white; border: 1.5px solid var(--danger); color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.btn-danger:hover { background: #fdf0ee; }
+.btn-add { padding: 0.7rem 1.2rem; background: #172412; border: 1.5px dashed var(--caramel); color: var(--caramel); border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; width: 100%; margin-bottom: 1rem; transition: background 0.15s; }
+.btn-add:hover { background: #d4eddd; }
+.btn-save { padding: 0.7rem 1.5rem; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; transition: background 0.15s; }
+.btn-save:hover { background: #256642; }
+.btn-sm { padding: 0.6rem 1rem; background: var(--caramel); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; white-space: nowrap; }
+.inline-row { display: flex; gap: 0.75rem; align-items: flex-end; }
+.inline-row .form-group { flex: 1; margin-bottom: 0; }
+.save-confirm { display: inline-block; margin-left: 1rem; color: var(--success); font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; }
+.save-confirm.show { opacity: 1; }
+.inline-msg { font-size: 0.82rem; color: var(--success); margin-left: 0.75rem; }
+
+@media (max-width: 480px) {
+  .header h1 { font-size: 1.8rem; }
+  .row-2 { grid-template-columns: 1fr; }
+  .product-manage-row { flex-direction: column; }
+  .product-manage-row .form-group.sm { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- CUSTOMER VIEW -->
+
+<div class="bg-pattern" aria-hidden="true">
+  <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="bakery-pat" x="0" y="0" width="160" height="160" patternUnits="userSpaceOnUse">
+        <!-- baguette -->
+        <g transform="translate(20,30) rotate(-30)">
+          <ellipse cx="0" cy="0" rx="28" ry="7" fill="#1e5c3a"/>
+          <line x1="-14" y1="-3" x2="-8" y2="3" stroke="#1e5c3a" stroke-width="1.5"/>
+          <line x1="-4" y1="-3" x2="2" y2="3" stroke="#1e5c3a" stroke-width="1.5"/>
+          <line x1="6" y1="-3" x2="12" y2="3" stroke="#1e5c3a" stroke-width="1.5"/>
+        </g>
+        <!-- round loaf -->
+        <g transform="translate(110,40)">
+          <ellipse cx="0" cy="0" rx="16" ry="13" fill="#1e5c3a"/>
+          <path d="M-8,-4 Q0,-12 8,-4" stroke="white" stroke-width="1.2" fill="none" opacity="0.4"/>
+        </g>
+        <!-- croissant -->
+        <g transform="translate(70,100) rotate(20)">
+          <path d="M-18,0 Q-10,-14 0,-8 Q10,-14 18,0 Q10,8 0,4 Q-10,8 -18,0Z" fill="#1e5c3a"/>
+        </g>
+        <!-- small bun -->
+        <g transform="translate(130,115)">
+          <ellipse cx="0" cy="0" rx="10" ry="8" fill="#1e5c3a"/>
+        </g>
+        <!-- wheat stalk -->
+        <g transform="translate(30,120) rotate(15)">
+          <line x1="0" y1="20" x2="0" y2="-20" stroke="#1e5c3a" stroke-width="1.5"/>
+          <ellipse cx="-4" cy="8" rx="4" ry="6" fill="#1e5c3a" transform="rotate(-25,-4,8)"/>
+          <ellipse cx="4" cy="0" rx="4" ry="6" fill="#1e5c3a" transform="rotate(25,4,0)"/>
+          <ellipse cx="-3" cy="-10" rx="3" ry="5" fill="#1e5c3a" transform="rotate(-20,-3,-10)"/>
+          <ellipse cx="3" cy="-16" rx="3" ry="5" fill="#1e5c3a" transform="rotate(20,3,-16)"/>
+        </g>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#bakery-pat)"/>
+  </svg>
+</div>
+
+<div id="view-customer" class="view active">
+  <div class="header">
+    <h1 id="bakery-name">Bageri utan gluten</h1>
+    <p class="header-sub" style="font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;margin-top:0.15rem;opacity:0.75">av Jenny Adelborg · celiakist</p>
+    <p class="header-sub">Naturligt glutenfritt · bakat i mitt kök helt utan spår av gluten</p>
+    <div style="margin-top:0.6rem">
+      <a class="header-ig" href="https://www.instagram.com/utan_gluten" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+        Följ mig på Instagram
+      </a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="order-form-wrap">
+
+      <p class="section-title" style="margin-top:0.5rem">Välj vad du vill ha</p>
+      <div class="products-grid" id="products-grid"></div>
+
+      <p class="section-title">Din beställning</p>
+      <div class="order-summary" id="order-summary">
+        <p class="empty-cart">Du har inte valt något ännu.</p>
+      </div>
+
+      <p class="section-title">Dina uppgifter</p>
+      <div class="row-2">
+        <div class="form-group">
+          <label>Namn</label>
+          <input type="text" id="cust-name" placeholder="Förnamn Efternamn" oninput="clearFieldError('cust-name','err-name')">
+          <span class="field-error" id="err-name">Fyll i ditt namn</span>
+        </div>
+        <div class="form-group">
+          <label>Telefon</label>
+          <input type="tel" id="cust-phone" placeholder="070-000 00 00" oninput="clearFieldError('cust-phone','err-phone')">
+          <span class="field-error" id="err-phone">Fyll i ditt telefonnummer</span>
+        </div>
+      </div>
+
+      <p class="section-title">Upphämtning</p>
+      <div class="row-2">
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="pickup-date" onchange="onDateChange()">
+          <span class="field-error" id="err-date">Välj ett datum</span>
+        </div>
+        <div class="form-group">
+          <label>Tid</label>
+          <select id="pickup-time" onchange="clearFieldError('pickup-time','err-time')">
+            <option value="">Välj tid…</option>
+          </select>
+          <span class="field-error" id="err-time">Välj en tid</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Övrigt <span style="font-weight:300;text-transform:none;letter-spacing:0">(valfritt)</span></label>
+        <textarea id="cust-note" rows="2" placeholder="Allergier, önskemål…"></textarea>
+      </div>
+
+      <div class="swish-box">
+        💳 <strong style="font-weight:600">Betalning sker via Swish</strong> efter lagd beställning:<br>
+        <span class="swish-number">+46 76-877 86 76</span>
+      </div>
+
+      <span class="field-error" id="err-cart" style="margin-bottom:0.75rem;font-size:0.85rem">Välj minst en produkt innan du skickar</span>
+
+      <button class="btn-bread" id="submit-btn" onclick="submitOrder()" disabled>🍞 Skicka beställning</button>
+    </div>
+
+    <div id="success-box" class="success-box" style="display:none">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🎉</div>
+      <h2>Tack för din beställning!</h2>
+      <p id="success-msg" style="margin-top:0.4rem"></p>
+      <div class="success-swish">
+        <strong>Swisha betalningen till</strong>
+        <span id="success-swish-line"></span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--muted)">Märk gärna betalningen med ditt namn.</p>
+      <button class="btn-secondary" onclick="resetOrder()" style="margin-top:1.25rem">Gör en ny beställning</button>
+    </div>
+
+    <div class="footer-admin">
+      <button onclick="showAdminLogin()" title="Admin">⚙</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div id="view-admin-login" class="view">
+  <div class="header"><h1>Admin</h1></div>
+  <div class="login-box">
+    <h2>Logga in</h2>
+    <div class="form-group">
+      <label>Lösenord</label>
+      <input type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div>
+    <button class="btn-primary" onclick="doAdminLogin()">Logga in</button>
+    <p class="login-error" id="login-error"></p>
+    <br>
+    <button class="btn-secondary" onclick="showView('view-customer')" style="margin-top:0.75rem">← Tillbaka</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="view-admin" class="view">
+  <div class="admin-header">
+    <h2>🍞 Admin</h2>
+    <button class="btn-secondary" onclick="adminLogout()" style="font-size:0.8rem;padding:0.4rem 0.8rem">Logga ut</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="tab-btn active" onclick="switchTab('orders',this)">Beställningar</button>
+    <button class="tab-btn" onclick="switchTab('products',this)">Produkter</button>
+    <button class="tab-btn" onclick="switchTab('settings',this)">Inställningar</button>
+  </div>
+
+  <div id="tab-orders" class="admin-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <p class="section-title" style="margin-bottom:0;border:none">Inkomna beställningar</p>
+      <button class="btn-secondary" onclick="clearAllOrders()" style="font-size:0.8rem;padding:0.35rem 0.8rem;color:var(--danger);border-color:var(--danger)">Rensa alla</button>
+    </div>
+    <div class="orders-list" id="orders-list"></div>
+  </div>
+
+  <div id="tab-products" class="admin-content" style="display:none">
+    <p class="section-title">Hantera produkter</p>
+    <div class="unsaved-banner" id="unsaved-banner">⚠ Du har osparade ändringar – kom ihåg att trycka "Spara produkter"</div>
+    <div id="products-manage-list"></div>
+    <button class="btn-add" onclick="addProductRow()">+ Lägg till produkt</button>
+    <div style="display:flex;align-items:center">
+      <button class="btn-save" onclick="saveProducts()">Spara produkter</button>
+      <span class="save-confirm" id="save-confirm">✓ Sparat!</span>
+    </div>
+  </div>
+
+  <div id="tab-settings" class="admin-content" style="display:none">
+    <div class="settings-card">
+      <h3>Bagerinets namn</h3>
+      <div class="inline-row">
+        <div class="form-group"><label>Visningsnamn</label><input type="text" id="bakery-name-input"></div>
+        <button class="btn-sm" onclick="saveBakeryName()">Spara</button>
+      </div>
+      <span id="msg-name" class="inline-msg" style="display:none"></span>
+    </div>
+
+    <div class="settings-card">
+      <h3>Tillgängliga dagar</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem">Kunder kan bara välja markerade dagar</p>
+      <div class="weekday-row" id="weekday-row"></div>
+      <button class="btn-sm" onclick="saveActiveDays()">Spara dagar</button>
+      <span id="msg-days" class="inline-msg" style="display:none"></span>
+    </div>
+
+    <div class="settings-card">
+      <h3>Upphämtningstider</h3>
+      <div class="time-chips" id="time-chips"></div>
+      <div class="add-time-row">
+        <input type="time" id="new-time-input">
+        <button class="btn-sm" onclick="addTime()">Lägg till</button>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h3>Byt lösenord</h3>
+      <div class="inline-row">
+        <div class="form-group"><label>Nytt lösenord</label><input type="password" id="new-pw" placeholder="Minst 4 tecken"></div>
+        <button class="btn-sm" onclick="changePassword()">Spara</button>
+      </div>
+      <p id="pw-msg" style="font-size:0.82rem;margin-top:0.5rem"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULTS = {
+  password: 'bageri123',
+  bakeryName: 'Bageri utan gluten',
+  products: [
+    { id: 1, name: 'Bullar',    price: 15, stock: 20 },
+    { id: 2, name: 'Ostbullar', price: 15, stock: 20 },
+    { id: 3, name: "Bröd",      price: 65, stock: 10 },
+  ],
+  times: ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'],
+  activeDays: [6]
+};
+const DAY_NAMES = ['Son','Man','Tis','Ons','Tor','Fre','Lor'];
+const DAY_NAMES_DISPLAY = ['\u00d6Sun','M\u00e5n','Tis','Ons','Tor','Fre','L\u00f6r'];
+
+function load(k,d){ try{ const v=localStorage.getItem(k); return v!==null?JSON.parse(v):d; }catch{ return d; } }
+function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+
+let products   = load('bak_products', DEFAULTS.products);
+let orders     = load('bak_orders',   []);
+let times      = load('bak_times',    DEFAULTS.times);
+let password   = load('bak_password', DEFAULTS.password);
+let bakeryName = load('bak_name', 'Bageri utan gluten');
+let activeDays = load('bak_days',     DEFAULTS.activeDays);
+let cart = {};
+
+// VIEWS
+function showView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function showAdminLogin(){ showView('view-admin-login'); document.getElementById('admin-pw').value=''; document.getElementById('login-error').textContent=''; }
+function doAdminLogin(){
+  if(document.getElementById('admin-pw').value===password){ showView('view-admin'); renderAdminOrders(); renderAdminProducts(); renderSettings(); }
+  else document.getElementById('login-error').textContent='Fel lösenord. Försök igen.';
+}
+function adminLogout(){ showView('view-customer'); }
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.admin-content').forEach(c=>c.style.display='none');
+  document.getElementById('tab-'+tab).style.display='block';
+  btn.classList.add('active');
+  if(tab==='orders') renderAdminOrders();
+  if(tab==='products') renderAdminProducts();
+  if(tab==='settings') renderSettings();
+}
+
+// PRODUCTS
+function renderProducts(){
+  const grid=document.getElementById('products-grid');
+  if(!products.length){ grid.innerHTML='<p style="color:var(--muted);font-style:italic">Inga produkter tillgängliga just nu.</p>'; return; }
+  grid.innerHTML=products.map(p=>{
+    const qty=cart[p.id]||0, soldOut=p.stock<=0;
+    return `<div class="product-card${soldOut?' sold-out':''}">
+      <div class="product-info">
+        <div class="product-name">${p.name}</div>
+        <div class="product-price">${p.price} kr/st</div>
+        ${!soldOut?`<div class="product-stock">Kvar: ${p.stock-qty} st</div>`:''}
+      </div>
+      ${soldOut?'<span class="sold-out-badge">Slutsålt</span>':`<div class="qty-control">
+        <button class="qty-btn" onclick="changeQty(${p.id},-1)" ${qty===0?'disabled':''}>−</button>
+        <span class="qty-num">${qty}</span>
+        <button class="qty-btn" onclick="changeQty(${p.id},1)" ${qty>=p.stock?'disabled':''}>+</button>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+function changeQty(id,delta){
+  const p=products.find(x=>x.id===id); if(!p) return;
+  const next=Math.max(0,Math.min(p.stock,(cart[id]||0)+delta));
+  if(next===0) delete cart[id]; else cart[id]=next;
+  renderProducts(); renderSummary(); updateSubmitBtn();
+  // clear cart error if items now selected
+  if(Object.keys(cart).length>0) document.getElementById('err-cart').classList.remove('show');
+}
+
+function renderSummary(){
+  const el=document.getElementById('order-summary'), items=Object.entries(cart);
+  if(!items.length){ el.innerHTML='<p class="empty-cart">Du har inte valt något ännu.</p>'; return; }
+  let total=0;
+  const lines=items.map(([id,qty])=>{ const p=products.find(x=>x.id==id),sub=p.price*qty; total+=sub; return `<div class="summary-line"><span>${p.name} × ${qty}</span><span>${sub} kr</span></div>`; }).join('');
+  el.innerHTML=`<div>${lines}<div class="summary-line summary-total"><span>Totalt</span><span>${total} kr</span></div></div>`;
+}
+
+function cartTotal(){ return Object.entries(cart).reduce((s,[id,qty])=>{ const p=products.find(x=>x.id==id); return s+(p?p.price*qty:0); },0); }
+
+function updateSubmitBtn(){ document.getElementById('submit-btn').disabled=Object.keys(cart).length===0; }
+
+// DATE PICKER
+function initDatePicker(){
+  const d=document.getElementById('pickup-date');
+  const today=new Date();
+  let candidate=new Date(today);
+  for(let i=0;i<14;i++){ if(activeDays.includes(candidate.getDay())) break; candidate.setDate(candidate.getDate()+1); }
+  d.min=today.toISOString().split('T')[0];
+  d.value=candidate.toISOString().split('T')[0];
+}
+function onDateChange(){
+  const d=document.getElementById('pickup-date');
+  if(!d.value) return;
+  const chosen=new Date(d.value+'T12:00:00');
+  if(!activeDays.includes(chosen.getDay())){
+    d.classList.add('error');
+    const err=document.getElementById('err-date');
+    err.textContent='Vi erbjuder inte upphämtning den dagen – välj ett annat datum.';
+    err.classList.add('show');
+  } else {
+    clearFieldError('pickup-date','err-date');
+  }
+}
+
+function renderPickupTimes(){
+  const sel=document.getElementById('pickup-time');
+  sel.innerHTML='<option value="">Välj tid\u2026</option>'+times.sort().map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+
+// VALIDATION
+function clearFieldError(fieldId,errId){
+  const el=document.getElementById(fieldId); if(el) el.classList.remove('error');
+  const err=document.getElementById(errId); if(err) err.classList.remove('show');
+}
+
+function validateForm(){
+  let valid=true;
+  const name=document.getElementById('cust-name').value.trim();
+  const phone=document.getElementById('cust-phone').value.trim();
+  const date=document.getElementById('pickup-date').value;
+  const time=document.getElementById('pickup-time').value;
+
+  if(!name){ document.getElementById('cust-name').classList.add('error'); document.getElementById('err-name').classList.add('show'); valid=false; }
+  if(!phone){ document.getElementById('cust-phone').classList.add('error'); document.getElementById('err-phone').classList.add('show'); valid=false; }
+  if(!date){
+    document.getElementById('pickup-date').classList.add('error');
+    document.getElementById('err-date').textContent='Välj ett datum';
+    document.getElementById('err-date').classList.add('show'); valid=false;
+  } else {
+    const chosen=new Date(date+'T12:00:00');
+    if(!activeDays.includes(chosen.getDay())){
+      document.getElementById('pickup-date').classList.add('error');
+      document.getElementById('err-date').textContent='Vi erbjuder inte upphämtning den dagen';
+      document.getElementById('err-date').classList.add('show'); valid=false;
+    }
+  }
+  if(!time){ document.getElementById('pickup-time').classList.add('error'); document.getElementById('err-time').classList.add('show'); valid=false; }
+  if(!Object.keys(cart).length){ document.getElementById('err-cart').classList.add('show'); valid=false; }
+  return valid;
+}
+
+// SUBMIT
+function submitOrder(){
+  if(!validateForm()) return;
+  const name=document.getElementById('cust-name').value.trim();
+  const phone=document.getElementById('cust-phone').value.trim();
+  const date=document.getElementById('pickup-date').value;
+  const time=document.getElementById('pickup-time').value;
+  const note=document.getElementById('cust-note').value.trim();
+  const items=Object.entries(cart).map(([id,qty])=>{ const p=products.find(x=>x.id==id); return {id:p.id,name:p.name,qty,price:p.price}; });
+  const total=items.reduce((s,i)=>s+i.qty*i.price,0);
+  items.forEach(i=>{ const p=products.find(x=>x.id===i.id); if(p) p.stock-=i.qty; });
+  save('bak_products',products);
+  orders.unshift({id:Date.now(),name,phone,date,time,note,items,total,createdAt:new Date().toLocaleString('sv-SE')});
+  save('bak_orders',orders);
+  document.getElementById('order-form-wrap').style.display='none';
+  document.getElementById('success-box').style.display='block';
+  document.getElementById('success-msg').textContent=`${name}, din beställning är mottagen! Hämta den ${formatDate(date)} kl ${time}.`;
+  document.getElementById('success-swish-line').textContent=`${total} kr · +46 76-877 86 76`;
+}
+
+function resetOrder(){
+  cart={};
+  renderProducts(); renderSummary(); updateSubmitBtn();
+  ['cust-name','cust-phone','cust-note'].forEach(id=>document.getElementById(id).value='');
+  ['err-name','err-phone','err-date','err-time','err-cart'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  ['cust-name','cust-phone','pickup-date','pickup-time'].forEach(id=>document.getElementById(id).classList.remove('error'));
+  initDatePicker();
+  document.getElementById('order-form-wrap').style.display='block';
+  document.getElementById('success-box').style.display='none';
+}
+
+function formatDate(d){ if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+
+// ADMIN ORDERS
+function renderAdminOrders(){
+  const el=document.getElementById('orders-list');
+  if(!orders.length){ el.innerHTML='<div class="no-orders">Inga beställningar än.</div>'; return; }
+  el.innerHTML=orders.map(o=>`
+    <div class="order-card" id="order-${o.id}">
+      <div class="order-card-header">
+        <div><div class="order-customer">${o.name}</div><div class="order-meta">📞 ${o.phone} · Beställd ${o.createdAt}</div></div>
+        <span class="order-time-badge">📅 ${formatDate(o.date)} kl ${o.time}</span>
+      </div>
+      <div class="order-items">${o.items.map(i=>`<span>${i.name} × ${i.qty}</span>`).join('')}</div>
+      <div class="order-total">Totalt: ${o.total} kr</div>
+      ${o.note?`<div class="order-note">💬 ${o.note}</div>`:''}
+      <button class="order-delete" onclick="deleteOrder(${o.id})">🗑 Ta bort</button>
+    </div>`).join('');
+}
+function deleteOrder(id){ if(!confirm('Ta bort denna beställning?')) return; orders=orders.filter(o=>o.id!==id); save('bak_orders',orders); renderAdminOrders(); }
+function clearAllOrders(){ if(!confirm('Rensa ALLA beställningar? Det går inte att ångra.')) return; orders=[]; save('bak_orders',orders); renderAdminOrders(); }
+
+// ADMIN PRODUCTS
+function renderAdminProducts(){
+  document.getElementById('products-manage-list').innerHTML=products.map(p=>`
+    <div class="product-manage-card">
+      <div class="product-manage-row">
+        <div class="form-group"><label>Namn</label><input type="text" id="pname-${p.id}" value="${p.name}" oninput="markDirty()"></div>
+        <div class="form-group sm"><label>Pris (kr)</label><input type="number" id="pprice-${p.id}" value="${p.price}" min="0" oninput="markDirty()"></div>
+        <div class="form-group sm"><label>Lager</label><input type="number" id="pstock-${p.id}" value="${p.stock}" min="0" oninput="markDirty()"></div>
+        <button class="btn-danger" onclick="removeProduct(${p.id})">Ta bort</button>
+      </div>
+    </div>`).join('');
+  document.getElementById('unsaved-banner').classList.remove('show');
+}
+function markDirty(){ document.getElementById('unsaved-banner').classList.add('show'); }
+function addProductRow(){ const id=Date.now(); products.push({id,name:'',price:0,stock:0}); renderAdminProducts(); markDirty(); document.getElementById('pname-'+id)?.focus(); }
+function removeProduct(id){ if(!confirm('Ta bort produkten?')) return; products=products.filter(p=>p.id!==id); renderAdminProducts(); markDirty(); }
+function saveProducts(){
+  products=products.map(p=>({id:p.id,name:document.getElementById('pname-'+p.id)?.value.trim()||p.name,price:parseInt(document.getElementById('pprice-'+p.id)?.value)||0,stock:parseInt(document.getElementById('pstock-'+p.id)?.value)||0})).filter(p=>p.name);
+  save('bak_products',products); renderProducts(); renderAdminProducts();
+  const c=document.getElementById('save-confirm'); c.classList.add('show'); setTimeout(()=>c.classList.remove('show'),2500);
+}
+
+// ADMIN SETTINGS
+function renderSettings(){ document.getElementById('bakery-name-input').value=bakeryName; renderWeekdays(); renderTimeChips(); }
+
+function saveBakeryName(){
+  bakeryName=document.getElementById('bakery-name-input').value.trim()||DEFAULTS.bakeryName;
+  save('bak_name',bakeryName); document.getElementById('bakery-name').textContent = bakeryName;
+  showMsg('msg-name','✓ Sparat');
+}
+
+function renderWeekdays(){
+  const days=['\u00d6 Sun','M\u00e5n','Tis','Ons','Tor','Fre','L\u00f6r'];
+  document.getElementById('weekday-row').innerHTML=days.map((name,i)=>
+    `<button class="day-toggle${activeDays.includes(i)?' active':''}" onclick="toggleDay(${i})">${name}</button>`
+  ).join('');
+}
+function toggleDay(i){ if(activeDays.includes(i)){ if(activeDays.length===1) return; activeDays=activeDays.filter(d=>d!==i); } else activeDays.push(i); renderWeekdays(); }
+function saveActiveDays(){ save('bak_days',activeDays); initDatePicker(); showMsg('msg-days','✓ Sparat'); }
+
+function showMsg(id,text){ const el=document.getElementById(id); if(!el) return; el.textContent=text; el.style.display='inline'; setTimeout(()=>el.style.display='none',2500); }
+
+function renderTimeChips(){
+  document.getElementById('time-chips').innerHTML=times.sort().map(t=>`<div class="chip">${t}<button class="chip-remove" onclick="removeTime('${t}')">×</button></div>`).join('');
+}
+function addTime(){ const v=document.getElementById('new-time-input').value; if(!v||times.includes(v)) return; times.push(v); save('bak_times',times); renderTimeChips(); renderPickupTimes(); document.getElementById('new-time-input').value=''; }
+function removeTime(t){ times=times.filter(x=>x!==t); save('bak_times',times); renderTimeChips(); renderPickupTimes(); }
+
+function changePassword(){
+  const pw=document.getElementById('new-pw').value, msg=document.getElementById('pw-msg');
+  if(pw.length<4){ msg.textContent='Lösenordet måste vara minst 4 tecken.'; msg.style.color='var(--danger)'; return; }
+  password=pw; save('bak_password',pw); document.getElementById('new-pw').value='';
+  msg.textContent='✓ Lösenord sparat!'; msg.style.color='var(--success)';
+  setTimeout(()=>msg.textContent='',3000);
+}
+
+// INIT
+document.getElementById('bakery-name').textContent = bakeryName;
+renderProducts(); renderPickupTimes(); initDatePicker(); updateSubmitBtn();
+</script>
+</body>
+</html>
