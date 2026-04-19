@@ -56,11 +56,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .products-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
 .product-card {
   background: var(--warm); border: 1px solid var(--border); border-radius: 12px;
-  padding: 1rem 1.25rem; display: flex; align-items: center;
-  justify-content: space-between; gap: 1rem; transition: box-shadow 0.2s;
+  overflow: hidden; transition: box-shadow 0.2s;
 }
 .product-card:hover { box-shadow: 0 2px 12px rgba(92,61,30,0.12); }
 .product-card.sold-out { opacity: 0.5; pointer-events: none; }
+.product-card-main {
+  padding: 1rem 1.25rem; display: flex; align-items: center;
+  justify-content: space-between; gap: 1rem;
+}
 .product-info { flex: 1; }
 .product-name { font-weight: 500; font-size: 1rem; color: var(--brown); }
 .product-price { font-size: 0.9rem; color: var(--crust); margin-top: 0.15rem; font-weight: 700; }
@@ -69,6 +72,25 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .sale-badge { display: inline-block; background: var(--berry); color: white; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.1rem 0.5rem; border-radius: 20px; margin-left: 0.4rem; vertical-align: middle; }
 .product-stock { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
 .sold-out-badge { font-size: 0.7rem; background: var(--sun-light); color: var(--crust); padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 500; }
+
+/* INGREDIENTS ACCORDION */
+.ingredients-toggle {
+  width: 100%; background: none; border: none; border-top: 1px solid var(--border);
+  padding: 0.5rem 1.25rem; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.78rem;
+  color: var(--muted); font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase;
+  transition: background 0.15s;
+}
+.ingredients-toggle:hover { background: rgba(92,61,30,0.04); }
+.ingredients-toggle .arrow { transition: transform 0.2s; font-style: normal; font-size: 0.7rem; }
+.ingredients-toggle.open .arrow { transform: rotate(180deg); }
+.ingredients-body {
+  display: none; padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.85rem; color: var(--text-light); line-height: 1.6;
+  background: var(--cream);
+}
+.ingredients-body.open { display: block; }
 .qty-control { display: flex; align-items: center; gap: 0.5rem; }
 .qty-btn {
   width: 34px; height: 34px; border-radius: 50%;
@@ -506,23 +528,39 @@ function renderProducts(){
   grid.innerHTML=products.map(p=>{
     const qty=cart[p.id]||0, soldOut=p.stock<=0;
     const hasSale = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
-    const activePrice = hasSale ? p.salePrice : p.price;
+    const activeP = hasSale ? p.salePrice : p.price;
     const priceHtml = hasSale
       ? `<span class="product-price-original">${p.price} kr</span><span class="product-price-sale">${p.salePrice} kr/st</span><span class="sale-badge">Rea</span>`
       : `${p.price} kr/st`;
+    const hasIngredients = p.ingredients && p.ingredients.trim();
     return `<div class="product-card${soldOut?' sold-out':''}">
-      <div class="product-info">
-        <div class="product-name">${p.name}</div>
-        <div class="product-price">${priceHtml}</div>
-        ${!soldOut?`<div class="product-stock">Kvar: ${p.stock-qty} st</div>`:''}
+      <div class="product-card-main">
+        <div class="product-info">
+          <div class="product-name">${p.name}</div>
+          <div class="product-price">${priceHtml}</div>
+          ${!soldOut?`<div class="product-stock">Kvar: ${p.stock-qty} st</div>`:''}
+        </div>
+        ${soldOut?'<span class="sold-out-badge">Slutsålt</span>':`<div class="qty-control">
+          <button class="qty-btn" onclick="changeQty(${p.id},-1)" ${qty===0?'disabled':''}>−</button>
+          <span class="qty-num">${qty}</span>
+          <button class="qty-btn" onclick="changeQty(${p.id},1)" ${qty>=p.stock?'disabled':''}>+</button>
+        </div>`}
       </div>
-      ${soldOut?'<span class="sold-out-badge">Slutsålt</span>':`<div class="qty-control">
-        <button class="qty-btn" onclick="changeQty(${p.id},-1)" ${qty===0?'disabled':''}>−</button>
-        <span class="qty-num">${qty}</span>
-        <button class="qty-btn" onclick="changeQty(${p.id},1)" ${qty>=p.stock?'disabled':''}>+</button>
-      </div>`}
+      ${hasIngredients ? `
+        <button class="ingredients-toggle" onclick="toggleIngredients(this)" aria-expanded="false">
+          🌾 Ingredienser <span class="arrow">▼</span>
+        </button>
+        <div class="ingredients-body">${p.ingredients.trim()}</div>
+      ` : ''}
     </div>`;
   }).join('');
+}
+
+function toggleIngredients(btn){
+  btn.classList.toggle('open');
+  const body = btn.nextElementSibling;
+  body.classList.toggle('open');
+  btn.setAttribute('aria-expanded', body.classList.contains('open'));
 }
 
 function changeQty(id,delta){
@@ -608,6 +646,16 @@ function validateForm(){
   return valid;
 }
 
+// TELEGRAM
+const TG_TOKEN = '8512071845:AAE2tMBb1DVefpKKBAS0OZmhV9Th2S1i6RM';
+const TG_CHAT  = '8730354737';
+function sendTelegram(msg){
+  fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:TG_CHAT, text:msg, parse_mode:'HTML'})
+  }).catch(()=>{});
+}
+
 // SUBMIT
 function submitOrder(){
   if(!validateForm()) return;
@@ -622,6 +670,10 @@ function submitOrder(){
   save('bak_products',products);
   orders.unshift({id:Date.now(),name,phone,date,time,note,items,total,createdAt:new Date().toLocaleString('sv-SE')});
   save('bak_orders',orders);
+  // Skicka Telegram-notis
+  const itemLines = items.map(i=>`  🍞 ${i.name} × ${i.qty} — ${i.qty*i.price} kr`).join('\n');
+  const noteLine = note ? `\n💬 ${note}` : '';
+  sendTelegram(`🛒 <b>Ny beställning!</b>\n👤 ${name}\n📞 ${phone}\n📅 ${formatDate(date)} kl ${time}\n\n${itemLines}\n\n💰 <b>Totalt: ${total} kr</b>${noteLine}`);
   document.getElementById('order-form-wrap').style.display='none';
   document.getElementById('success-box').style.display='block';
   document.getElementById('success-msg').textContent=`${name}, din beställning är mottagen! Hämta den ${formatDate(date)} kl ${time}.`;
@@ -671,12 +723,16 @@ function renderAdminProducts(){
         <div class="form-group sm"><label>Lager</label><input type="number" id="pstock-${p.id}" value="${p.stock}" min="0" oninput="markDirty()"></div>
         <button class="btn-danger" onclick="removeProduct(${p.id})">Ta bort</button>
       </div>
+      <div class="form-group" style="margin-top:0.75rem;margin-bottom:0">
+        <label>Ingredienser <span style="font-weight:300;text-transform:none;letter-spacing:0">(visas som fällbar lista för kunden)</span></label>
+        <textarea id="pingredients-${p.id}" rows="3" placeholder="T.ex. Surdeg på fullkornsrismjöl, bovetemjöl, ekologisk havremjöl…" oninput="markDirty()">${p.ingredients||''}</textarea>
+      </div>
       ${p.salePrice && p.salePrice > 0 && p.salePrice < p.price ? `<p style="font-size:0.78rem;color:var(--berry);margin-top:0.5rem">🏷 Rea aktiv: ${p.salePrice} kr (ordinarie ${p.price} kr)</p>` : ''}
     </div>`).join('');
   document.getElementById('unsaved-banner').classList.remove('show');
 }
 function markDirty(){ document.getElementById('unsaved-banner').classList.add('show'); }
-function addProductRow(){ const id=Date.now(); products.push({id,name:'',price:0,salePrice:0,stock:0}); renderAdminProducts(); markDirty(); document.getElementById('pname-'+id)?.focus(); }
+function addProductRow(){ const id=Date.now(); products.push({id,name:'',price:0,salePrice:0,stock:0,ingredients:''}); renderAdminProducts(); markDirty(); document.getElementById('pname-'+id)?.focus(); }
 function removeProduct(id){ if(!confirm('Ta bort produkten?')) return; products=products.filter(p=>p.id!==id); renderAdminProducts(); markDirty(); }
 function saveProducts(){
   products=products.map(p=>{
@@ -685,7 +741,8 @@ function saveProducts(){
     const salePriceRaw=document.getElementById('psaleprice-'+p.id)?.value;
     const salePrice=salePriceRaw!==''&&salePriceRaw!==undefined ? parseInt(salePriceRaw)||0 : 0;
     const stock=parseInt(document.getElementById('pstock-'+p.id)?.value)||0;
-    return {id:p.id,name,price,salePrice,stock};
+    const ingredients=document.getElementById('pingredients-'+p.id)?.value.trim()||'';
+    return {id:p.id,name,price,salePrice,stock,ingredients};
   }).filter(p=>p.name);
   save('bak_products',products); renderProducts(); renderAdminProducts();
   const c=document.getElementById('save-confirm'); c.classList.add('show'); setTimeout(()=>c.classList.remove('show'),2500);
