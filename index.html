@@ -494,6 +494,19 @@ select {
       </div>
       <p id="pw-msg" style="font-size:0.82rem;margin-top:0.5rem"></p>
     </div>
+
+    <div class="settings-card">
+      <h3>💾 Säkerhetskopiera inställningar</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">Ladda ner en backup av alla produkter och inställningar. Ladda upp den igen efter en koduppdatering för att återställa allt.</p>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button class="btn-save" onclick="exportSettings()">⬇ Ladda ner backup</button>
+        <label class="btn-secondary" style="cursor:pointer;padding:0.7rem 1.5rem;font-size:0.9rem;">
+          ⬆ Återställ från backup
+          <input type="file" accept=".json" onchange="importSettings(event)" style="display:none;">
+        </label>
+      </div>
+      <p id="import-msg" style="font-size:0.82rem;margin-top:0.75rem;display:none;"></p>
+    </div>
   </div>
 </div>
 
@@ -840,6 +853,55 @@ function changePassword(){
   password=pw; save('bak_password',pw); document.getElementById('new-pw').value='';
   msg.textContent='✓ Lösenord sparat!'; msg.style.color='var(--success)';
   setTimeout(()=>msg.textContent='',3000);
+}
+
+// BACKUP & RESTORE
+function exportSettings(){
+  const data = {
+    version: 1,
+    exportedAt: new Date().toLocaleString('sv-SE'),
+    bakeryName,
+    products,
+    times,
+    activeDays,
+    password
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `bageri-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importSettings(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.version || !data.products) throw new Error('Ogiltig fil');
+      if(!confirm('Återställ alla inställningar från backupfilen? Nuvarande inställningar skrivs över.')) return;
+      if(data.bakeryName){ bakeryName=data.bakeryName; save('bak_name',bakeryName); document.getElementById('bakery-name').textContent=bakeryName; }
+      if(data.products){ products=data.products; save('bak_products',products); renderProducts(); }
+      if(data.times){ times=data.times; save('bak_times',times); renderPickupTimes(); }
+      if(data.activeDays){ activeDays=data.activeDays; save('bak_days',activeDays); initDatePicker(); }
+      if(data.password){ password=data.password; save('bak_password',password); }
+      renderSettings();
+      const msg = document.getElementById('import-msg');
+      msg.textContent = `✓ Återställd från backup (${data.exportedAt})`;
+      msg.style.color = 'var(--success)';
+      msg.style.display = 'block';
+      setTimeout(()=>msg.style.display='none', 4000);
+    } catch(err) {
+      const msg = document.getElementById('import-msg');
+      msg.textContent = '✗ Kunde inte läsa filen. Är det rätt backup-fil?';
+      msg.style.color = 'var(--danger)';
+      msg.style.display = 'block';
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
 }
 
 // INIT
