@@ -4,35 +4,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bageri utan gluten – Beställ</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --cream: #0f1a14;
-  --warm: #172412;
-  --brown: #4cbe82;
-  --caramel: #5dd496;
-  --caramel-light: #7aeaae;
-  --text: #e8f5ee;
-  --muted: #8abf9e;
-  --border: #2a4a38;
-  --success: #5dd496;
-  --danger: #ff6b6b;
+  --cream: #FDF6EC;
+  --warm: #FFFAF4;
+  --brown: #C4823A;
+  --caramel: #C4823A;
+  --caramel-light: #E8A96A;
+  --crust: #5C3D1E;
+  --seed: #8B6F47;
+  --sage: #7A8C6E;
+  --berry: #C25B6E;
+  --sun: #F2C94C;
+  --sun-light: #FAE49A;
+  --text: #2D1F0E;
+  --text-light: #7A6650;
+  --muted: #8B6F47;
+  --border: rgba(92,61,30,0.2);
+  --success: #7A8C6E;
+  --danger: #C25B6E;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'DM Sans', sans-serif; background: #0f1a14; color: var(--text); min-height: 100vh; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
 
 /* HEADER */
-.header { background: #0a120d; color: var(--cream); padding: 2rem 1.5rem 1.5rem; text-align: center; }
-.header h1 { font-family: 'Cormorant Garamond', serif; font-size: 2.6rem; font-weight: 600; letter-spacing: 0.04em; font-style: italic; line-height: 1.1; }
-.header-sub { font-size: 0.88rem; opacity: 1.0; color: rgba(255,255,255,0.95); margin-top: 0.3rem; font-weight: 300; }
+.header { background: var(--crust); color: var(--cream); padding: 2rem 1.5rem 1.5rem; text-align: center; }
+.header h1 { font-family: 'Playfair Display', serif; font-size: 2.6rem; font-weight: 700; letter-spacing: 0.04em; font-style: italic; line-height: 1.1; color: var(--cream); }
+.header-sub { font-size: 0.88rem; opacity: 1.0; color: var(--caramel-light); margin-top: 0.3rem; font-weight: 300; }
 .header-ig {
   display: inline-flex; align-items: center; gap: 0.4rem;
-  margin-top: 0.75rem; color: rgba(255,255,255,0.95);
+  margin-top: 0.75rem; color: var(--caramel-light);
   text-decoration: none; font-size: 0.82rem;
-  border: 1px solid rgba(255,255,255,0.6);
+  border: 1px solid rgba(232,169,106,0.6);
   padding: 0.3rem 0.85rem; border-radius: 20px; transition: all 0.15s;
 }
-.header-ig:hover { color: white; border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08); }
+.header-ig:hover { color: var(--cream); border-color: var(--caramel-light); background: rgba(196,130,58,0.2); }
 
 /* VIEWS */
 .view { display: none; }
@@ -41,24 +48,27 @@ body { font-family: 'DM Sans', sans-serif; background: #0f1a14; color: var(--tex
 /* LAYOUT */
 .container { max-width: 600px; margin: 0 auto; padding: 1.5rem; }
 .section-title {
-  font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; color: #c8f0d8;
+  font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: var(--crust);
   margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);
 }
 
 /* PRODUCT CARDS */
 .products-grid { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
 .product-card {
-  background: #182b20; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--warm); border: 1px solid var(--border); border-radius: 12px;
   padding: 1rem 1.25rem; display: flex; align-items: center;
   justify-content: space-between; gap: 1rem; transition: box-shadow 0.2s;
 }
-.product-card:hover { box-shadow: 0 2px 12px rgba(30,92,58,0.08); }
+.product-card:hover { box-shadow: 0 2px 12px rgba(92,61,30,0.12); }
 .product-card.sold-out { opacity: 0.5; pointer-events: none; }
 .product-info { flex: 1; }
 .product-name { font-weight: 500; font-size: 1rem; color: var(--brown); }
-.product-price { font-size: 0.9rem; color: #7aeaae; margin-top: 0.15rem; font-weight: 700; }
-.product-stock { font-size: 0.75rem; color: #8abf9e; margin-top: 0.1rem; }
-.sold-out-badge { font-size: 0.7rem; background: #3a1a1a; color: var(--danger); padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 500; }
+.product-price { font-size: 0.9rem; color: var(--crust); margin-top: 0.15rem; font-weight: 700; }
+.product-price-original { font-size: 0.82rem; color: var(--muted); text-decoration: line-through; margin-right: 0.35rem; font-weight: 400; }
+.product-price-sale { color: var(--berry); font-weight: 700; }
+.sale-badge { display: inline-block; background: var(--berry); color: white; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.1rem 0.5rem; border-radius: 20px; margin-left: 0.4rem; vertical-align: middle; }
+.product-stock { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+.sold-out-badge { font-size: 0.7rem; background: var(--sun-light); color: var(--crust); padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 500; }
 .qty-control { display: flex; align-items: center; gap: 0.5rem; }
 .qty-btn {
   width: 34px; height: 34px; border-radius: 50%;
@@ -72,10 +82,10 @@ body { font-family: 'DM Sans', sans-serif; background: #0f1a14; color: var(--tex
 
 /* FORM */
 .form-group { margin-bottom: 1.1rem; }
-label { display: block; font-size: 0.8rem; font-weight: 600; color: #8abf9e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
 input, select, textarea {
   width: 100%; padding: 0.7rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px;
-  font-family: 'DM Sans', sans-serif; font-size: 0.95rem; background: #182b20; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem; background: var(--warm); color: var(--text);
   transition: border-color 0.2s; -webkit-appearance: none; appearance: none;
 }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--caramel); }
@@ -89,13 +99,13 @@ select {
 .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 
 /* ORDER SUMMARY */
-.order-summary { background: #172412; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.order-summary { background: var(--warm); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--border); }
 .summary-line { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem; color: var(--text); }
 .summary-total { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-weight: 500; font-size: 1rem; }
 .empty-cart { color: var(--muted); font-size: 0.9rem; font-style: italic; }
 
 /* SWISH */
-.swish-box { background: #1f2e18; border: 1.5px solid #4a6e38; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 0.9rem; color: var(--text); line-height: 1.5; }
+.swish-box { background: var(--sun-light); border: 1.5px solid var(--sun); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; font-size: 0.9rem; color: var(--crust); line-height: 1.5; }
 .swish-number { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.03em; display: block; margin-top: 0.2rem; }
 
 /* BUTTONS */
@@ -104,27 +114,27 @@ select {
   border-radius: 10px; font-family: 'Playfair Display', serif; font-size: 1.05rem;
   cursor: pointer; transition: background 0.2s, transform 0.1s; letter-spacing: 0.02em;
 }
-.btn-primary:hover:not(:disabled) { background: var(--brown); }
+.btn-primary:hover:not(:disabled) { background: var(--crust); }
 .btn-primary:active:not(:disabled) { transform: scale(0.99); }
 .btn-primary:disabled { background: var(--border); cursor: not-allowed; opacity: 0.6; }
 .btn-secondary {
-  padding: 0.6rem 1.5rem; background: #182b20; border: 1.5px solid var(--caramel);
+  padding: 0.6rem 1.5rem; background: var(--warm); border: 1.5px solid var(--caramel);
   color: var(--caramel); border-radius: 8px; font-family: 'DM Sans', sans-serif;
   font-size: 0.9rem; cursor: pointer; transition: all 0.15s;
 }
 .btn-secondary:hover { background: var(--caramel); color: white; }
 
 /* SUCCESS */
-.success-box { background: #172412; border: 1px solid #2a4a38; border-radius: 12px; padding: 1.75rem 1.5rem; text-align: center; margin-top: 1rem; }
-.success-box h2 { font-family: 'Playfair Display', serif; color: var(--success); margin-bottom: 0.5rem; font-size: 1.5rem; }
-.success-box p { font-size: 0.9rem; color: #8abf9e; margin-bottom: 0.4rem; }
-.success-swish { background: #0f1a14; border: 1px solid #2a4a38; border-radius: 8px; padding: 0.85rem 1rem; margin: 1rem 0; text-align: left; }
-.success-swish strong { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #8abf9e; margin-bottom: 0.2rem; }
-.success-swish span { font-size: 1.1rem; font-weight: 600; color: #c8f0d8; }
+.success-box { background: var(--warm); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem 1.5rem; text-align: center; margin-top: 1rem; }
+.success-box h2 { font-family: 'Playfair Display', serif; color: var(--crust); margin-bottom: 0.5rem; font-size: 1.5rem; }
+.success-box p { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.4rem; }
+.success-swish { background: var(--sun-light); border: 1px solid var(--sun); border-radius: 8px; padding: 0.85rem 1rem; margin: 1rem 0; text-align: left; }
+.success-swish strong { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.2rem; }
+.success-swish span { font-size: 1.1rem; font-weight: 600; color: var(--crust); }
 
 /* FOOTER ADMIN */
 .footer-admin { text-align: center; padding: 2.5rem 0 1.5rem; }
-.footer-admin button { background: none; border: none; color: #2a4a38; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: color 0.2s; }
+.footer-admin button { background: none; border: none; color: var(--border); font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: color 0.2s; }
 .footer-admin button:hover { color: var(--muted); }
 
 
@@ -137,9 +147,9 @@ select {
 /* BREAD SUBMIT BUTTON */
 .btn-bread {
   width: 100%; padding: 1rem 1.5rem;
-  background: #3a9e68; color: #0a120d; border: none;
-  border-radius: 40px 40px 36px 36px; box-shadow: 0 4px 16px rgba(15,61,34,0.35);
-  font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600;
+  background: var(--caramel); color: white; border: none;
+  border-radius: 40px 40px 36px 36px; box-shadow: 0 4px 16px rgba(92,61,30,0.25);
+  font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700;
   cursor: pointer; transition: background 0.2s, transform 0.12s;
   letter-spacing: 0.03em; position: relative; overflow: hidden;
   display: flex; align-items: center; justify-content: center; gap: 0.6rem;
@@ -148,74 +158,74 @@ select {
   content: '';
   position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
   width: 70%; height: 3px;
-  background: rgba(255,255,255,0.18); border-radius: 2px;
+  background: rgba(255,255,255,0.25); border-radius: 2px;
 }
 .btn-bread::after {
   content: '';
   position: absolute; bottom: 0; left: 0; right: 0; height: 8px;
-  background: rgba(0,0,0,0.12); border-radius: 0 0 36px 36px;
+  background: rgba(0,0,0,0.1); border-radius: 0 0 36px 36px;
 }
-.btn-bread:hover:not(:disabled) { background: #163f28; transform: translateY(-1px); }
+.btn-bread:hover:not(:disabled) { background: var(--crust); transform: translateY(-1px); }
 .btn-bread:active:not(:disabled) { transform: scale(0.98); }
-.btn-bread:disabled { background: #9dcab5; cursor: not-allowed; color: rgba(255,255,255,0.7); opacity: 1; }
+.btn-bread:disabled { background: var(--caramel-light); cursor: not-allowed; color: rgba(255,255,255,0.8); opacity: 1; }
 
 /* ADMIN LOGIN */
-.login-box { max-width: 360px; margin: 4rem auto; background: #182b20; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 24px rgba(30,92,58,0.1); text-align: center; }
-.login-box h2 { font-family: 'Playfair Display', serif; margin-bottom: 1.5rem; color: var(--brown); }
+.login-box { max-width: 360px; margin: 4rem auto; background: var(--warm); border-radius: 16px; padding: 2rem; box-shadow: 0 4px 24px rgba(92,61,30,0.1); text-align: center; border: 1px solid var(--border); }
+.login-box h2 { font-family: 'Playfair Display', serif; margin-bottom: 1.5rem; color: var(--crust); }
 .login-box input { margin-bottom: 1rem; }
 .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.5rem; }
 
 /* ADMIN PANEL */
-.admin-header { background: #0a120d; color: white; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.admin-header { background: var(--crust); color: var(--cream); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
 .admin-header h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
-.admin-tabs { display: flex; background: #0f1a14; border-bottom: 2px solid var(--border); }
+.admin-tabs { display: flex; background: var(--cream); border-bottom: 2px solid var(--border); }
 .tab-btn { padding: 0.75rem 1.5rem; border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
 .tab-btn.active { color: var(--caramel); border-bottom-color: var(--caramel); font-weight: 500; }
 .admin-content { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
 
 /* ORDERS */
 .orders-list { display: flex; flex-direction: column; gap: 1rem; }
-.order-card { background: #182b20; border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; }
+.order-card { background: var(--warm); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; }
 .order-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
-.order-customer { font-weight: 500; color: var(--brown); }
+.order-customer { font-weight: 500; color: var(--crust); }
 .order-meta { font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
-.order-time-badge { background: var(--warm); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; color: var(--brown); font-weight: 500; white-space: nowrap; }
+.order-time-badge { background: var(--sun-light); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; color: var(--crust); font-weight: 500; white-space: nowrap; }
 .order-items { font-size: 0.88rem; color: var(--text); }
 .order-items span { display: inline-block; margin-right: 1rem; }
-.order-total { margin-top: 0.5rem; font-weight: 500; font-size: 0.9rem; color: var(--caramel); }
+.order-total { margin-top: 0.5rem; font-weight: 500; font-size: 0.9rem; color: var(--brown); }
 .order-note { margin-top: 0.4rem; font-size: 0.82rem; color: var(--muted); font-style: italic; }
-.order-delete { background: none; border: 1px solid #f0c0bc; color: var(--danger); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; margin-top: 0.75rem; font-family: 'DM Sans', sans-serif; }
-.order-delete:hover { background: #fdf0ee; }
+.order-delete { background: none; border: 1px solid var(--berry); color: var(--berry); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; margin-top: 0.75rem; font-family: 'DM Sans', sans-serif; }
+.order-delete:hover { background: #fdf0f2; }
 .no-orders { text-align: center; padding: 3rem; color: var(--muted); font-style: italic; }
 
 /* PRODUCT MANAGEMENT */
-.product-manage-card { background: #182b20; border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
+.product-manage-card { background: var(--warm); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; }
 .product-manage-row { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
 .product-manage-row .form-group { margin-bottom: 0; flex: 1; min-width: 120px; }
 .product-manage-row .form-group.sm { max-width: 100px; }
-.unsaved-banner { background: #2a2200; border: 1px solid #806000; border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.82rem; color: #f0d060; margin-bottom: 1rem; display: none; }
+.unsaved-banner { background: var(--sun-light); border: 1px solid var(--sun); border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.82rem; color: var(--crust); margin-bottom: 1rem; display: none; }
 .unsaved-banner.show { display: block; }
 
 /* SETTINGS */
-.settings-card { background: #182b20; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
-.settings-card h3 { font-family: 'Playfair Display', serif; margin-bottom: 1rem; color: var(--brown); }
+.settings-card { background: var(--warm); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+.settings-card h3 { font-family: 'Playfair Display', serif; margin-bottom: 1rem; color: var(--crust); }
 .time-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
-.chip { padding: 0.3rem 0.8rem; border-radius: 20px; background: var(--warm); border: 1px solid var(--border); font-size: 0.82rem; display: flex; align-items: center; gap: 0.4rem; }
+.chip { padding: 0.3rem 0.8rem; border-radius: 20px; background: var(--cream); border: 1px solid var(--border); font-size: 0.82rem; display: flex; align-items: center; gap: 0.4rem; color: var(--text); }
 .chip-remove { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.9rem; padding: 0; line-height: 1; }
 .chip-remove:hover { color: var(--danger); }
 .add-time-row { display: flex; gap: 0.5rem; }
 .add-time-row input { flex: 1; }
 .weekday-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-.day-toggle { padding: 0.4rem 0.75rem; border-radius: 20px; border: 1.5px solid var(--border); background: white; font-size: 0.82rem; cursor: pointer; color: var(--muted); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.day-toggle { padding: 0.4rem 0.75rem; border-radius: 20px; border: 1.5px solid var(--border); background: var(--warm); font-size: 0.82rem; cursor: pointer; color: var(--muted); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
 .day-toggle.active { background: var(--caramel); color: white; border-color: var(--caramel); }
 
 /* MISC BUTTONS */
-.btn-danger { padding: 0.65rem 1rem; background: white; border: 1.5px solid var(--danger); color: var(--danger); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
-.btn-danger:hover { background: #fdf0ee; }
-.btn-add { padding: 0.7rem 1.2rem; background: #172412; border: 1.5px dashed var(--caramel); color: var(--caramel); border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; width: 100%; margin-bottom: 1rem; transition: background 0.15s; }
-.btn-add:hover { background: #d4eddd; }
-.btn-save { padding: 0.7rem 1.5rem; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; transition: background 0.15s; }
-.btn-save:hover { background: #256642; }
+.btn-danger { padding: 0.65rem 1rem; background: var(--warm); border: 1.5px solid var(--berry); color: var(--berry); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+.btn-danger:hover { background: #fdf0f2; }
+.btn-add { padding: 0.7rem 1.2rem; background: var(--cream); border: 1.5px dashed var(--caramel); color: var(--caramel); border-radius: 10px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; width: 100%; margin-bottom: 1rem; transition: background 0.15s; }
+.btn-add:hover { background: var(--sun-light); }
+.btn-save { padding: 0.7rem 1.5rem; background: var(--sage); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; transition: background 0.15s; }
+.btn-save:hover { background: var(--crust); }
 .btn-sm { padding: 0.6rem 1rem; background: var(--caramel); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; white-space: nowrap; }
 .inline-row { display: flex; gap: 0.75rem; align-items: flex-end; }
 .inline-row .form-group { flex: 1; margin-bottom: 0; }
@@ -241,31 +251,31 @@ select {
       <pattern id="bakery-pat" x="0" y="0" width="160" height="160" patternUnits="userSpaceOnUse">
         <!-- baguette -->
         <g transform="translate(20,30) rotate(-30)">
-          <ellipse cx="0" cy="0" rx="28" ry="7" fill="#1e5c3a"/>
-          <line x1="-14" y1="-3" x2="-8" y2="3" stroke="#1e5c3a" stroke-width="1.5"/>
-          <line x1="-4" y1="-3" x2="2" y2="3" stroke="#1e5c3a" stroke-width="1.5"/>
-          <line x1="6" y1="-3" x2="12" y2="3" stroke="#1e5c3a" stroke-width="1.5"/>
+          <ellipse cx="0" cy="0" rx="28" ry="7" fill="#C4823A"/>
+          <line x1="-14" y1="-3" x2="-8" y2="3" stroke="#C4823A" stroke-width="1.5"/>
+          <line x1="-4" y1="-3" x2="2" y2="3" stroke="#C4823A" stroke-width="1.5"/>
+          <line x1="6" y1="-3" x2="12" y2="3" stroke="#C4823A" stroke-width="1.5"/>
         </g>
         <!-- round loaf -->
         <g transform="translate(110,40)">
-          <ellipse cx="0" cy="0" rx="16" ry="13" fill="#1e5c3a"/>
+          <ellipse cx="0" cy="0" rx="16" ry="13" fill="#C4823A"/>
           <path d="M-8,-4 Q0,-12 8,-4" stroke="white" stroke-width="1.2" fill="none" opacity="0.4"/>
         </g>
         <!-- croissant -->
         <g transform="translate(70,100) rotate(20)">
-          <path d="M-18,0 Q-10,-14 0,-8 Q10,-14 18,0 Q10,8 0,4 Q-10,8 -18,0Z" fill="#1e5c3a"/>
+          <path d="M-18,0 Q-10,-14 0,-8 Q10,-14 18,0 Q10,8 0,4 Q-10,8 -18,0Z" fill="#C4823A"/>
         </g>
         <!-- small bun -->
         <g transform="translate(130,115)">
-          <ellipse cx="0" cy="0" rx="10" ry="8" fill="#1e5c3a"/>
+          <ellipse cx="0" cy="0" rx="10" ry="8" fill="#C4823A"/>
         </g>
         <!-- wheat stalk -->
         <g transform="translate(30,120) rotate(15)">
-          <line x1="0" y1="20" x2="0" y2="-20" stroke="#1e5c3a" stroke-width="1.5"/>
-          <ellipse cx="-4" cy="8" rx="4" ry="6" fill="#1e5c3a" transform="rotate(-25,-4,8)"/>
-          <ellipse cx="4" cy="0" rx="4" ry="6" fill="#1e5c3a" transform="rotate(25,4,0)"/>
-          <ellipse cx="-3" cy="-10" rx="3" ry="5" fill="#1e5c3a" transform="rotate(-20,-3,-10)"/>
-          <ellipse cx="3" cy="-16" rx="3" ry="5" fill="#1e5c3a" transform="rotate(20,3,-16)"/>
+          <line x1="0" y1="20" x2="0" y2="-20" stroke="#C4823A" stroke-width="1.5"/>
+          <ellipse cx="-4" cy="8" rx="4" ry="6" fill="#C4823A" transform="rotate(-25,-4,8)"/>
+          <ellipse cx="4" cy="0" rx="4" ry="6" fill="#C4823A" transform="rotate(25,4,0)"/>
+          <ellipse cx="-3" cy="-10" rx="3" ry="5" fill="#C4823A" transform="rotate(-20,-3,-10)"/>
+          <ellipse cx="3" cy="-16" rx="3" ry="5" fill="#C4823A" transform="rotate(20,3,-16)"/>
         </g>
       </pattern>
     </defs>
@@ -495,10 +505,15 @@ function renderProducts(){
   if(!products.length){ grid.innerHTML='<p style="color:var(--muted);font-style:italic">Inga produkter tillgängliga just nu.</p>'; return; }
   grid.innerHTML=products.map(p=>{
     const qty=cart[p.id]||0, soldOut=p.stock<=0;
+    const hasSale = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
+    const activePrice = hasSale ? p.salePrice : p.price;
+    const priceHtml = hasSale
+      ? `<span class="product-price-original">${p.price} kr</span><span class="product-price-sale">${p.salePrice} kr/st</span><span class="sale-badge">Rea</span>`
+      : `${p.price} kr/st`;
     return `<div class="product-card${soldOut?' sold-out':''}">
       <div class="product-info">
         <div class="product-name">${p.name}</div>
-        <div class="product-price">${p.price} kr/st</div>
+        <div class="product-price">${priceHtml}</div>
         ${!soldOut?`<div class="product-stock">Kvar: ${p.stock-qty} st</div>`:''}
       </div>
       ${soldOut?'<span class="sold-out-badge">Slutsålt</span>':`<div class="qty-control">
@@ -519,15 +534,17 @@ function changeQty(id,delta){
   if(Object.keys(cart).length>0) document.getElementById('err-cart').classList.remove('show');
 }
 
+function activePrice(p){ return (p.salePrice && p.salePrice > 0 && p.salePrice < p.price) ? p.salePrice : p.price; }
+
 function renderSummary(){
   const el=document.getElementById('order-summary'), items=Object.entries(cart);
   if(!items.length){ el.innerHTML='<p class="empty-cart">Du har inte valt något ännu.</p>'; return; }
   let total=0;
-  const lines=items.map(([id,qty])=>{ const p=products.find(x=>x.id==id),sub=p.price*qty; total+=sub; return `<div class="summary-line"><span>${p.name} × ${qty}</span><span>${sub} kr</span></div>`; }).join('');
+  const lines=items.map(([id,qty])=>{ const p=products.find(x=>x.id==id),sub=activePrice(p)*qty; total+=sub; return `<div class="summary-line"><span>${p.name} × ${qty}</span><span>${sub} kr</span></div>`; }).join('');
   el.innerHTML=`<div>${lines}<div class="summary-line summary-total"><span>Totalt</span><span>${total} kr</span></div></div>`;
 }
 
-function cartTotal(){ return Object.entries(cart).reduce((s,[id,qty])=>{ const p=products.find(x=>x.id==id); return s+(p?p.price*qty:0); },0); }
+function cartTotal(){ return Object.entries(cart).reduce((s,[id,qty])=>{ const p=products.find(x=>x.id==id); return s+(p?activePrice(p)*qty:0); },0); }
 
 function updateSubmitBtn(){ document.getElementById('submit-btn').disabled=Object.keys(cart).length===0; }
 
@@ -599,7 +616,7 @@ function submitOrder(){
   const date=document.getElementById('pickup-date').value;
   const time=document.getElementById('pickup-time').value;
   const note=document.getElementById('cust-note').value.trim();
-  const items=Object.entries(cart).map(([id,qty])=>{ const p=products.find(x=>x.id==id); return {id:p.id,name:p.name,qty,price:p.price}; });
+  const items=Object.entries(cart).map(([id,qty])=>{ const p=products.find(x=>x.id==id); return {id:p.id,name:p.name,qty,price:activePrice(p)}; });
   const total=items.reduce((s,i)=>s+i.qty*i.price,0);
   items.forEach(i=>{ const p=products.find(x=>x.id===i.id); if(p) p.stock-=i.qty; });
   save('bak_products',products);
@@ -650,17 +667,26 @@ function renderAdminProducts(){
       <div class="product-manage-row">
         <div class="form-group"><label>Namn</label><input type="text" id="pname-${p.id}" value="${p.name}" oninput="markDirty()"></div>
         <div class="form-group sm"><label>Pris (kr)</label><input type="number" id="pprice-${p.id}" value="${p.price}" min="0" oninput="markDirty()"></div>
+        <div class="form-group sm"><label>Reapris (kr)</label><input type="number" id="psaleprice-${p.id}" value="${p.salePrice||''}" min="0" placeholder="–" oninput="markDirty()" style="border-color:${p.salePrice && p.salePrice < p.price ? 'var(--berry)' : ''}"></div>
         <div class="form-group sm"><label>Lager</label><input type="number" id="pstock-${p.id}" value="${p.stock}" min="0" oninput="markDirty()"></div>
         <button class="btn-danger" onclick="removeProduct(${p.id})">Ta bort</button>
       </div>
+      ${p.salePrice && p.salePrice > 0 && p.salePrice < p.price ? `<p style="font-size:0.78rem;color:var(--berry);margin-top:0.5rem">🏷 Rea aktiv: ${p.salePrice} kr (ordinarie ${p.price} kr)</p>` : ''}
     </div>`).join('');
   document.getElementById('unsaved-banner').classList.remove('show');
 }
 function markDirty(){ document.getElementById('unsaved-banner').classList.add('show'); }
-function addProductRow(){ const id=Date.now(); products.push({id,name:'',price:0,stock:0}); renderAdminProducts(); markDirty(); document.getElementById('pname-'+id)?.focus(); }
+function addProductRow(){ const id=Date.now(); products.push({id,name:'',price:0,salePrice:0,stock:0}); renderAdminProducts(); markDirty(); document.getElementById('pname-'+id)?.focus(); }
 function removeProduct(id){ if(!confirm('Ta bort produkten?')) return; products=products.filter(p=>p.id!==id); renderAdminProducts(); markDirty(); }
 function saveProducts(){
-  products=products.map(p=>({id:p.id,name:document.getElementById('pname-'+p.id)?.value.trim()||p.name,price:parseInt(document.getElementById('pprice-'+p.id)?.value)||0,stock:parseInt(document.getElementById('pstock-'+p.id)?.value)||0})).filter(p=>p.name);
+  products=products.map(p=>{
+    const name=document.getElementById('pname-'+p.id)?.value.trim()||p.name;
+    const price=parseInt(document.getElementById('pprice-'+p.id)?.value)||0;
+    const salePriceRaw=document.getElementById('psaleprice-'+p.id)?.value;
+    const salePrice=salePriceRaw!==''&&salePriceRaw!==undefined ? parseInt(salePriceRaw)||0 : 0;
+    const stock=parseInt(document.getElementById('pstock-'+p.id)?.value)||0;
+    return {id:p.id,name,price,salePrice,stock};
+  }).filter(p=>p.name);
   save('bak_products',products); renderProducts(); renderAdminProducts();
   const c=document.getElementById('save-confirm'); c.classList.add('show'); setTimeout(()=>c.classList.remove('show'),2500);
 }
