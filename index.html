@@ -153,6 +153,10 @@ select {
 .success-swish { background: var(--sun-light); border: 1px solid var(--sun); border-radius: 8px; padding: 0.85rem 1rem; margin: 1rem 0; text-align: left; }
 .success-swish strong { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.2rem; }
 .success-swish span { font-size: 1.1rem; font-weight: 600; color: var(--crust); }
+.success-pickup { background: var(--cream); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem; margin: 0.5rem 0; text-align: left; }
+.success-pickup strong { display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.3rem; }
+.success-pickup a { font-size: 0.95rem; font-weight: 500; color: var(--brown); text-decoration: none; }
+.success-pickup a:hover { text-decoration: underline; }
 
 /* FOOTER ADMIN */
 .footer-admin { text-align: center; padding: 2.5rem 0 1.5rem; }
@@ -310,6 +314,11 @@ select {
     <h1 id="bakery-name">Bageri utan gluten</h1>
     <p class="header-sub" style="font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;margin-top:0.15rem;opacity:0.75">av Jenny Adelborg · celiakist</p>
     <p class="header-sub">Naturligt glutenfritt · bakat i mitt kök helt utan spår av gluten</p>
+    <p class="header-sub" style="margin-top:0.4rem;">
+      <a href="https://maps.google.com/?q=Narcissgatan+32,+Helsingborg" target="_blank" rel="noopener" style="color:var(--caramel-light);text-decoration:none;">
+        📍 Narcissgatan 32, 256 61 Helsingborg
+      </a>
+    </p>
     <div style="margin-top:0.6rem">
       <a class="header-ig" href="https://www.instagram.com/utan_gluten" target="_blank" rel="noopener">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
@@ -367,6 +376,7 @@ select {
       <div class="swish-box">
         💳 <strong style="font-weight:600">Betalning sker via Swish</strong> efter lagd beställning:<br>
         <span class="swish-number">+46 76-877 86 76</span>
+        <span style="display:block;margin-top:0.5rem;font-size:0.85rem;">📍 Upphämtning: <a href="https://maps.google.com/?q=Narcissgatan+32,+Helsingborg" target="_blank" rel="noopener" style="color:var(--crust);font-weight:500;">Narcissgatan 32, 256 61 Helsingborg</a></span>
       </div>
 
       <span class="field-error" id="err-cart" style="margin-bottom:0.75rem;font-size:0.85rem">Välj minst en produkt innan du skickar</span>
@@ -383,7 +393,17 @@ select {
         <span id="success-swish-line"></span>
       </div>
       <p style="font-size:0.8rem;color:var(--muted)">Märk gärna betalningen med ditt namn.</p>
-      <button class="btn-secondary" onclick="resetOrder()" style="margin-top:1.25rem">Gör en ny beställning</button>
+      <div class="success-pickup">
+        <strong>📍 Upphämtningsadress</strong>
+        <a href="https://maps.google.com/?q=Narcissgatan+32,+Helsingborg" target="_blank" rel="noopener">
+          Narcissgatan 32, 256 61 Helsingborg
+        </a>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1.25rem;flex-wrap:wrap;justify-content:center;">
+        <button class="btn-secondary" onclick="shareOrder()" style="display:flex;align-items:center;gap:0.4rem;">📤 Dela bekräftelse</button>
+        <button class="btn-secondary" onclick="addToCalendar()" style="display:flex;align-items:center;gap:0.4rem;">📅 Spara i kalender</button>
+      </div>
+      <button class="btn-secondary" onclick="resetOrder()" style="margin-top:0.75rem;width:100%">Gör en ny beställning</button>
     </div>
 
     <div class="footer-admin">
@@ -657,6 +677,7 @@ function sendTelegram(msg){
 }
 
 // SUBMIT
+let lastOrder = {};
 function submitOrder(){
   if(!validateForm()) return;
   const name=document.getElementById('cust-name').value.trim();
@@ -670,6 +691,7 @@ function submitOrder(){
   save('bak_products',products);
   orders.unshift({id:Date.now(),name,phone,date,time,note,items,total,createdAt:new Date().toLocaleString('sv-SE')});
   save('bak_orders',orders);
+  lastOrder = {name,phone,date,time,note,items,total};
   // Skicka Telegram-notis
   const itemLines = items.map(i=>`  🍞 ${i.name} × ${i.qty} — ${i.qty*i.price} kr`).join('\n');
   const noteLine = note ? `\n💬 ${note}` : '';
@@ -678,6 +700,44 @@ function submitOrder(){
   document.getElementById('success-box').style.display='block';
   document.getElementById('success-msg').textContent=`${name}, din beställning är mottagen! Hämta den ${formatDate(date)} kl ${time}.`;
   document.getElementById('success-swish-line').textContent=`${total} kr · +46 76-877 86 76`;
+}
+
+// DELA & KALENDER
+function shareOrder(){
+  const o = lastOrder;
+  const itemLines = o.items.map(i=>`${i.name} × ${i.qty} — ${i.qty*i.price} kr`).join('\n');
+  const text = `🥐 Beställning – Bageri utan gluten\n\n${o.name}\n📅 ${formatDate(o.date)} kl ${o.time}\n📍 Narcissgatan 32, 256 61 Helsingborg\n\n${itemLines}\n\n💰 Totalt: ${o.total} kr\nSwisha till: +46 76-877 86 76`;
+  if(navigator.share){
+    navigator.share({ title:'Beställningsbekräftelse – Bageri utan gluten', text }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>alert('Bekräftelsen kopierades till urklipp!')).catch(()=>alert('Kunde inte dela. Kopiera texten manuellt.'));
+  }
+}
+
+function addToCalendar(){
+  const o = lastOrder;
+  const [y,m,d] = o.date.split('-');
+  const [h,min] = o.time.split(':');
+  const pad = n => String(n).padStart(2,'0');
+  const start = `${y}${m}${d}T${pad(h)}${pad(min)}00`;
+  const endH = String(parseInt(h)+1).padStart(2,'0');
+  const end = `${y}${m}${d}T${endH}${pad(min)}00`;
+  const itemLines = o.items.map(i=>`${i.name} × ${i.qty}`).join(', ');
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bageri utan gluten//SE',
+    'BEGIN:VEVENT',
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:Hämta beställning – Bageri utan gluten`,
+    `DESCRIPTION:${itemLines}\\nTotalt: ${o.total} kr\\nSwisha: +46 76-877 86 76`,
+    `LOCATION:Narcissgatan 32\\, 256 61 Helsingborg`,
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], {type:'text/calendar'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'beställning-bageri-utan-gluten.ics';
+  a.click();
 }
 
 function resetOrder(){
