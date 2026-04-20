@@ -510,33 +510,100 @@ select {
   </div>
 </div>
 
+</body>
+</html>
 <script>
+// ── GOOGLE SHEETS API ──────────────────────────────────────────
+const API = 'https://script.google.com/macros/s/AKfycbx200ubifZjIn-L31kHtFiWDjglTHTP0-ecYCfRFTgb9wXnnRleUL2LQYtBFk5K5nz7/exec';
+
+async function apiGet(action){
+  const r = await fetch(`${API}?action=${action}`);
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error||'api error');
+  return j.data;
+}
+async function apiPost(body){
+  const r = await fetch(API, {method:'POST', body: JSON.stringify(body)});
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error||'api error');
+  return j;
+}
+
+// ── DEFAULTS ───────────────────────────────────────────────────
 const DEFAULTS = {
   password: 'bageri123',
   bakeryName: 'Bageri utan gluten',
   products: [
-    { id: 1, name: 'Bullar',    price: 15, stock: 20 },
-    { id: 2, name: 'Ostbullar', price: 15, stock: 20 },
-    { id: 3, name: "Bröd",      price: 65, stock: 10 },
+    { id:1, name:'Bullar',    price:15, salePrice:0, stock:20, ingredients:'Surdeg på durramjöl & ekologiskt glutenfritt havremjöl. Fullkornsrismjöl, teffmjöl, bovetemjöl, majsstärkelse, potatismjöl. Toppas med vallmofrön.' },
+    { id:2, name:'Ostbullar', price:15, salePrice:0, stock:20, ingredients:'Surdeg på durramjöl & ekologiskt glutenfritt havremjöl. Fullkornsrismjöl, teffmjöl, bovetemjöl, majsstärkelse, potatismjöl. Toppas med ost.' },
+    { id:3, name:'Bröd',      price:65, salePrice:0, stock:10, ingredients:'Surdeg på fullkornsrismjöl & bovetemjöl. Fullkornsrismjöl, ekologiskt glutenfritt havremjöl, bovetemjöl, majsstärkelse, potatismjöl.' },
   ],
   times: ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'],
   activeDays: [6]
 };
-const DAY_NAMES = ['Son','Man','Tis','Ons','Tor','Fre','Lor'];
-const DAY_NAMES_DISPLAY = ['\u00d6Sun','M\u00e5n','Tis','Ons','Tor','Fre','L\u00f6r'];
 
-function load(k,d){ try{ const v=localStorage.getItem(k); return v!==null?JSON.parse(v):d; }catch{ return d; } }
-function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
-
-let products   = load('bak_products', DEFAULTS.products);
-let orders     = load('bak_orders',   []);
-let times      = load('bak_times',    DEFAULTS.times);
-let password   = load('bak_password', DEFAULTS.password);
-let bakeryName = load('bak_name', 'Bageri utan gluten');
-let activeDays = load('bak_days',     DEFAULTS.activeDays);
+// ── STATE ──────────────────────────────────────────────────────
+let products   = DEFAULTS.products;
+let orders     = [];
+let times      = DEFAULTS.times;
+let password   = DEFAULTS.password;
+let bakeryName = DEFAULTS.bakeryName;
+let activeDays = DEFAULTS.activeDays;
 let cart = {};
 
-// VIEWS
+function lsave(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
+function lload(k,d){ try{ const v=localStorage.getItem(k); return v!==null?JSON.parse(v):d; }catch{ return d; } }
+
+// ── LOADER ─────────────────────────────────────────────────────
+function showLoader(on){
+  let el = document.getElementById('page-loader');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'page-loader';
+    el.style.cssText = 'position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:0.75rem;font-family:DM Sans,sans-serif;color:var(--muted);font-size:0.9rem;';
+    el.innerHTML = '<span style="font-size:2.5rem">🥐</span><span>Laddar...</span>';
+    document.body.appendChild(el);
+  }
+  el.style.display = on ? 'flex' : 'none';
+}
+
+// ── LADDA DATA FRÅN SHEETS ─────────────────────────────────────
+async function loadFromSheets(){
+  showLoader(true);
+  try {
+    const [prods, settings, tms] = await Promise.all([
+      apiGet('getProducts'),
+      apiGet('getSettings'),
+      apiGet('getTimes')
+    ]);
+    if(prods && prods.length){
+      products = prods.map(p=>({...p, id:Number(p.id), price:Number(p.price), salePrice:Number(p.salePrice)||0, stock:Number(p.stock)}));
+      lsave('bak_products', products);
+    }
+    if(tms && tms.length){ times = tms; lsave('bak_times', times); }
+    if(settings){
+      if(settings.bakeryName){ bakeryName=settings.bakeryName; lsave('bak_name', bakeryName); }
+      if(settings.password){ password=settings.password; lsave('bak_password', password); }
+      if(settings.activeDays){ activeDays=settings.activeDays.map(Number); lsave('bak_days', activeDays); }
+    }
+  } catch(e){
+    console.warn('Sheets ej nåbart, använder cache:', e);
+    products   = lload('bak_products', DEFAULTS.products);
+    times      = lload('bak_times',    DEFAULTS.times);
+    password   = lload('bak_password', DEFAULTS.password);
+    bakeryName = lload('bak_name',     DEFAULTS.bakeryName);
+    activeDays = lload('bak_days',     DEFAULTS.activeDays);
+  }
+  document.getElementById('bakery-name').textContent = bakeryName;
+  renderProducts(); renderPickupTimes(); initDatePicker(); updateSubmitBtn();
+  showLoader(false);
+}
+
+async function sheetsPost(body){
+  try { await apiPost(body); } catch(e){ console.warn('Sheets save failed:', e); }
+}
+
+// ── VIEWS ──────────────────────────────────────────────────────
 function showView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function showAdminLogin(){ showView('view-admin-login'); document.getElementById('admin-pw').value=''; document.getElementById('login-error').textContent=''; }
 function doAdminLogin(){
@@ -554,14 +621,13 @@ function switchTab(tab,btn){
   if(tab==='settings') renderSettings();
 }
 
-// PRODUCTS
+// ── PRODUCTS ───────────────────────────────────────────────────
 function renderProducts(){
   const grid=document.getElementById('products-grid');
   if(!products.length){ grid.innerHTML='<p style="color:var(--muted);font-style:italic">Inga produkter tillgängliga just nu.</p>'; return; }
   grid.innerHTML=products.map(p=>{
     const qty=cart[p.id]||0, soldOut=p.stock<=0;
     const hasSale = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
-    const activeP = hasSale ? p.salePrice : p.price;
     const priceHtml = hasSale
       ? `<span class="product-price-original">${p.price} kr</span><span class="product-price-sale">${p.salePrice} kr/st</span><span class="sale-badge">Rea</span>`
       : `${p.price} kr/st`;
@@ -601,7 +667,6 @@ function changeQty(id,delta){
   const next=Math.max(0,Math.min(p.stock,(cart[id]||0)+delta));
   if(next===0) delete cart[id]; else cart[id]=next;
   renderProducts(); renderSummary(); updateSubmitBtn();
-  // clear cart error if items now selected
   if(Object.keys(cart).length>0) document.getElementById('err-cart').classList.remove('show');
 }
 
@@ -616,10 +681,9 @@ function renderSummary(){
 }
 
 function cartTotal(){ return Object.entries(cart).reduce((s,[id,qty])=>{ const p=products.find(x=>x.id==id); return s+(p?activePrice(p)*qty:0); },0); }
-
 function updateSubmitBtn(){ document.getElementById('submit-btn').disabled=Object.keys(cart).length===0; }
 
-// DATE PICKER
+// ── DATE PICKER ────────────────────────────────────────────────
 function initDatePicker(){
   const d=document.getElementById('pickup-date');
   const today=new Date();
@@ -637,29 +701,24 @@ function onDateChange(){
     const err=document.getElementById('err-date');
     err.textContent='Vi erbjuder inte upphämtning den dagen – välj ett annat datum.';
     err.classList.add('show');
-  } else {
-    clearFieldError('pickup-date','err-date');
-  }
+  } else { clearFieldError('pickup-date','err-date'); }
 }
-
 function renderPickupTimes(){
   const sel=document.getElementById('pickup-time');
-  sel.innerHTML='<option value="">Välj tid\u2026</option>'+times.sort().map(t=>`<option value="${t}">${t}</option>`).join('');
+  sel.innerHTML='<option value="">Välj tid…</option>'+times.sort().map(t=>`<option value="${t}">${t}</option>`).join('');
 }
 
-// VALIDATION
+// ── VALIDATION ─────────────────────────────────────────────────
 function clearFieldError(fieldId,errId){
   const el=document.getElementById(fieldId); if(el) el.classList.remove('error');
   const err=document.getElementById(errId); if(err) err.classList.remove('show');
 }
-
 function validateForm(){
   let valid=true;
   const name=document.getElementById('cust-name').value.trim();
   const phone=document.getElementById('cust-phone').value.trim();
   const date=document.getElementById('pickup-date').value;
   const time=document.getElementById('pickup-time').value;
-
   if(!name){ document.getElementById('cust-name').classList.add('error'); document.getElementById('err-name').classList.add('show'); valid=false; }
   if(!phone){ document.getElementById('cust-phone').classList.add('error'); document.getElementById('err-phone').classList.add('show'); valid=false; }
   if(!date){
@@ -679,7 +738,7 @@ function validateForm(){
   return valid;
 }
 
-// TELEGRAM
+// ── TELEGRAM ───────────────────────────────────────────────────
 const TG_TOKEN = '8512071845:AAE2tMBb1DVefpKKBAS0OZmhV9Th2S1i6RM';
 const TG_CHAT  = '8730354737';
 function sendTelegram(msg){
@@ -689,7 +748,7 @@ function sendTelegram(msg){
   }).catch(()=>{});
 }
 
-// SUBMIT
+// ── SUBMIT ─────────────────────────────────────────────────────
 let lastOrder = {};
 function submitOrder(){
   if(!validateForm()) return;
@@ -700,57 +759,31 @@ function submitOrder(){
   const note=document.getElementById('cust-note').value.trim();
   const items=Object.entries(cart).map(([id,qty])=>{ const p=products.find(x=>x.id==id); return {id:p.id,name:p.name,qty,price:activePrice(p)}; });
   const total=items.reduce((s,i)=>s+i.qty*i.price,0);
-  items.forEach(i=>{ const p=products.find(x=>x.id===i.id); if(p) p.stock-=i.qty; });
-  save('bak_products',products);
-  orders.unshift({id:Date.now(),name,phone,date,time,note,items,total,createdAt:new Date().toLocaleString('sv-SE')});
-  save('bak_orders',orders);
+  const order = {id:Date.now(),name,phone,date,time,note,items,total,createdAt:new Date().toLocaleString('sv-SE')};
   lastOrder = {name,phone,date,time,note,items,total};
-  // Skicka Telegram-notis
+
+  // Uppdatera lager
+  items.forEach(i=>{ const p=products.find(x=>x.id===i.id); if(p) p.stock-=i.qty; });
+  lsave('bak_products', products);
+
+  // Spara till Sheets
+  sheetsPost({action:'saveOrder', order});
+  sheetsPost({action:'saveProducts', products});
+
+  // Spara lokalt
+  orders = lload('bak_orders',[]);
+  orders.unshift(order);
+  lsave('bak_orders', orders);
+
+  // Telegram
   const itemLines = items.map(i=>`  🍞 ${i.name} × ${i.qty} — ${i.qty*i.price} kr`).join('\n');
   const noteLine = note ? `\n💬 ${note}` : '';
   sendTelegram(`🛒 <b>Ny beställning!</b>\n👤 ${name}\n📞 ${phone}\n📅 ${formatDate(date)} kl ${time}\n\n${itemLines}\n\n💰 <b>Totalt: ${total} kr</b>${noteLine}`);
+
   document.getElementById('order-form-wrap').style.display='none';
   document.getElementById('success-box').style.display='block';
   document.getElementById('success-msg').textContent=`${name}, din beställning är mottagen! Hämta den ${formatDate(date)} kl ${time}.`;
   document.getElementById('success-swish-line').textContent=`${total} kr · +46 76-877 86 76`;
-}
-
-// DELA & KALENDER
-function shareOrder(){
-  const o = lastOrder;
-  const itemLines = o.items.map(i=>`${i.name} × ${i.qty} — ${i.qty*i.price} kr`).join('\n');
-  const text = `🥐 Beställning – Bageri utan gluten\n\n${o.name}\n📅 ${formatDate(o.date)} kl ${o.time}\n📍 Narcissgatan 32, 256 61 Helsingborg\n\n${itemLines}\n\n💰 Totalt: ${o.total} kr\nSwisha till: +46 76-877 86 76`;
-  if(navigator.share){
-    navigator.share({ title:'Beställningsbekräftelse – Bageri utan gluten', text }).catch(()=>{});
-  } else {
-    navigator.clipboard.writeText(text).then(()=>alert('Bekräftelsen kopierades till urklipp!')).catch(()=>alert('Kunde inte dela. Kopiera texten manuellt.'));
-  }
-}
-
-function addToCalendar(){
-  const o = lastOrder;
-  const [y,m,d] = o.date.split('-');
-  const [h,min] = o.time.split(':');
-  const pad = n => String(n).padStart(2,'0');
-  const start = `${y}${m}${d}T${pad(h)}${pad(min)}00`;
-  const endH = String(parseInt(h)+1).padStart(2,'0');
-  const end = `${y}${m}${d}T${endH}${pad(min)}00`;
-  const itemLines = o.items.map(i=>`${i.name} × ${i.qty}`).join(', ');
-  const ics = [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bageri utan gluten//SE',
-    'BEGIN:VEVENT',
-    `DTSTART:${start}`,
-    `DTEND:${end}`,
-    `SUMMARY:Hämta beställning – Bageri utan gluten`,
-    `DESCRIPTION:${itemLines}\\nTotalt: ${o.total} kr\\nSwisha: +46 76-877 86 76`,
-    `LOCATION:Narcissgatan 32\\, 256 61 Helsingborg`,
-    'END:VEVENT','END:VCALENDAR'
-  ].join('\r\n');
-  const blob = new Blob([ics], {type:'text/calendar'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'beställning-bageri-utan-gluten.ics';
-  a.click();
 }
 
 function resetOrder(){
@@ -766,9 +799,45 @@ function resetOrder(){
 
 function formatDate(d){ if(!d) return ''; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
 
-// ADMIN ORDERS
-function renderAdminOrders(){
+// ── DELA & KALENDER ────────────────────────────────────────────
+function shareOrder(){
+  const o = lastOrder;
+  const itemLines = o.items.map(i=>`${i.name} × ${i.qty} — ${i.qty*i.price} kr`).join('\n');
+  const text = `🥐 Beställning – Bageri utan gluten\n\n${o.name}\n📅 ${formatDate(o.date)} kl ${o.time}\n📍 Narcissgatan 32, 256 61 Helsingborg\n\n${itemLines}\n\n💰 Totalt: ${o.total} kr\nSwisha till: +46 76-877 86 76`;
+  if(navigator.share){
+    navigator.share({ title:'Beställningsbekräftelse – Bageri utan gluten', text }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>alert('Bekräftelsen kopierades till urklipp!')).catch(()=>alert('Kunde inte dela.'));
+  }
+}
+function addToCalendar(){
+  const o = lastOrder;
+  const [y,m,d] = o.date.split('-');
+  const [h,min] = o.time.split(':');
+  const pad = n => String(n).padStart(2,'0');
+  const start = `${y}${m}${d}T${pad(h)}${pad(min)}00`;
+  const endH = String(parseInt(h)+1).padStart(2,'0');
+  const end = `${y}${m}${d}T${endH}${pad(min)}00`;
+  const itemLines = o.items.map(i=>`${i.name} × ${i.qty}`).join(', ');
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bageri utan gluten//SE','BEGIN:VEVENT',
+    `DTSTART:${start}`,`DTEND:${end}`,`SUMMARY:Hämta beställning – Bageri utan gluten`,
+    `DESCRIPTION:${itemLines}\\nTotalt: ${o.total} kr\\nSwisha: +46 76-877 86 76`,
+    `LOCATION:Narcissgatan 32\\, 256 61 Helsingborg`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));
+  a.download = 'beställning-bageri-utan-gluten.ics';
+  a.click();
+}
+
+// ── ADMIN ORDERS ───────────────────────────────────────────────
+async function renderAdminOrders(){
   const el=document.getElementById('orders-list');
+  el.innerHTML='<p style="color:var(--muted);font-style:italic;padding:1rem 0">Laddar beställningar...</p>';
+  try {
+    orders = await apiGet('getOrders');
+  } catch(e){
+    orders = lload('bak_orders',[]);
+  }
   if(!orders.length){ el.innerHTML='<div class="no-orders">Inga beställningar än.</div>'; return; }
   el.innerHTML=orders.map(o=>`
     <div class="order-card" id="order-${o.id}">
@@ -779,26 +848,23 @@ function renderAdminOrders(){
       <div class="order-items">${o.items.map(i=>`<span>${i.name} × ${i.qty}</span>`).join('')}</div>
       <div class="order-total">Totalt: ${o.total} kr</div>
       ${o.note?`<div class="order-note">💬 ${o.note}</div>`:''}
-      <button class="order-delete" onclick="deleteOrder(${o.id})">🗑 Ta bort</button>
     </div>`).join('');
 }
-function deleteOrder(id){ if(!confirm('Ta bort denna beställning?')) return; orders=orders.filter(o=>o.id!==id); save('bak_orders',orders); renderAdminOrders(); }
-function clearAllOrders(){ if(!confirm('Rensa ALLA beställningar? Det går inte att ångra.')) return; orders=[]; save('bak_orders',orders); renderAdminOrders(); }
 
-// ADMIN PRODUCTS
+// ── ADMIN PRODUCTS ─────────────────────────────────────────────
 function renderAdminProducts(){
   document.getElementById('products-manage-list').innerHTML=products.map(p=>`
     <div class="product-manage-card">
       <div class="product-manage-row">
         <div class="form-group"><label>Namn</label><input type="text" id="pname-${p.id}" value="${p.name}" oninput="markDirty()"></div>
         <div class="form-group sm"><label>Pris (kr)</label><input type="number" id="pprice-${p.id}" value="${p.price}" min="0" oninput="markDirty()"></div>
-        <div class="form-group sm"><label>Reapris (kr)</label><input type="number" id="psaleprice-${p.id}" value="${p.salePrice||''}" min="0" placeholder="–" oninput="markDirty()" style="border-color:${p.salePrice && p.salePrice < p.price ? 'var(--berry)' : ''}"></div>
+        <div class="form-group sm"><label>Reapris (kr)</label><input type="number" id="psaleprice-${p.id}" value="${p.salePrice||''}" min="0" placeholder="–" oninput="markDirty()"></div>
         <div class="form-group sm"><label>Lager</label><input type="number" id="pstock-${p.id}" value="${p.stock}" min="0" oninput="markDirty()"></div>
         <button class="btn-danger" onclick="removeProduct(${p.id})">Ta bort</button>
       </div>
       <div class="form-group" style="margin-top:0.75rem;margin-bottom:0">
         <label>Ingredienser <span style="font-weight:300;text-transform:none;letter-spacing:0">(visas som fällbar lista för kunden)</span></label>
-        <textarea id="pingredients-${p.id}" rows="3" placeholder="T.ex. Surdeg på fullkornsrismjöl, bovetemjöl, ekologisk havremjöl…" oninput="markDirty()">${p.ingredients||''}</textarea>
+        <textarea id="pingredients-${p.id}" rows="3" placeholder="T.ex. Surdeg på fullkornsrismjöl…" oninput="markDirty()">${p.ingredients||''}</textarea>
       </div>
       ${p.salePrice && p.salePrice > 0 && p.salePrice < p.price ? `<p style="font-size:0.78rem;color:var(--berry);margin-top:0.5rem">🏷 Rea aktiv: ${p.salePrice} kr (ordinarie ${p.price} kr)</p>` : ''}
     </div>`).join('');
@@ -807,7 +873,7 @@ function renderAdminProducts(){
 function markDirty(){ document.getElementById('unsaved-banner').classList.add('show'); }
 function addProductRow(){ const id=Date.now(); products.push({id,name:'',price:0,salePrice:0,stock:0,ingredients:''}); renderAdminProducts(); markDirty(); document.getElementById('pname-'+id)?.focus(); }
 function removeProduct(id){ if(!confirm('Ta bort produkten?')) return; products=products.filter(p=>p.id!==id); renderAdminProducts(); markDirty(); }
-function saveProducts(){
+async function saveProducts(){
   products=products.map(p=>{
     const name=document.getElementById('pname-'+p.id)?.value.trim()||p.name;
     const price=parseInt(document.getElementById('pprice-'+p.id)?.value)||0;
@@ -817,16 +883,20 @@ function saveProducts(){
     const ingredients=document.getElementById('pingredients-'+p.id)?.value.trim()||'';
     return {id:p.id,name,price,salePrice,stock,ingredients};
   }).filter(p=>p.name);
-  save('bak_products',products); renderProducts(); renderAdminProducts();
+  lsave('bak_products',products);
+  await sheetsPost({action:'saveProducts', products});
+  renderProducts(); renderAdminProducts();
   const c=document.getElementById('save-confirm'); c.classList.add('show'); setTimeout(()=>c.classList.remove('show'),2500);
 }
 
-// ADMIN SETTINGS
+// ── ADMIN SETTINGS ─────────────────────────────────────────────
 function renderSettings(){ document.getElementById('bakery-name-input').value=bakeryName; renderWeekdays(); renderTimeChips(); }
 
-function saveBakeryName(){
+async function saveBakeryName(){
   bakeryName=document.getElementById('bakery-name-input').value.trim()||DEFAULTS.bakeryName;
-  save('bak_name',bakeryName); document.getElementById('bakery-name').textContent = bakeryName;
+  lsave('bak_name',bakeryName);
+  document.getElementById('bakery-name').textContent = bakeryName;
+  await saveSettingsToSheets();
   showMsg('msg-name','✓ Sparat');
 }
 
@@ -837,76 +907,88 @@ function renderWeekdays(){
   ).join('');
 }
 function toggleDay(i){ if(activeDays.includes(i)){ if(activeDays.length===1) return; activeDays=activeDays.filter(d=>d!==i); } else activeDays.push(i); renderWeekdays(); }
-function saveActiveDays(){ save('bak_days',activeDays); initDatePicker(); showMsg('msg-days','✓ Sparat'); }
+async function saveActiveDays(){
+  lsave('bak_days',activeDays);
+  initDatePicker();
+  await saveSettingsToSheets();
+  showMsg('msg-days','✓ Sparat');
+}
+
+async function saveSettingsToSheets(){
+  await sheetsPost({action:'saveSettings', settings:{bakeryName, password, activeDays}});
+}
 
 function showMsg(id,text){ const el=document.getElementById(id); if(!el) return; el.textContent=text; el.style.display='inline'; setTimeout(()=>el.style.display='none',2500); }
 
 function renderTimeChips(){
   document.getElementById('time-chips').innerHTML=times.sort().map(t=>`<div class="chip">${t}<button class="chip-remove" onclick="removeTime('${t}')">×</button></div>`).join('');
 }
-function addTime(){ const v=document.getElementById('new-time-input').value; if(!v||times.includes(v)) return; times.push(v); save('bak_times',times); renderTimeChips(); renderPickupTimes(); document.getElementById('new-time-input').value=''; }
-function removeTime(t){ times=times.filter(x=>x!==t); save('bak_times',times); renderTimeChips(); renderPickupTimes(); }
+async function addTime(){
+  const v=document.getElementById('new-time-input').value;
+  if(!v||times.includes(v)) return;
+  times.push(v);
+  lsave('bak_times',times);
+  await sheetsPost({action:'saveTimes', times});
+  renderTimeChips(); renderPickupTimes();
+  document.getElementById('new-time-input').value='';
+}
+async function removeTime(t){
+  times=times.filter(x=>x!==t);
+  lsave('bak_times',times);
+  await sheetsPost({action:'saveTimes', times});
+  renderTimeChips(); renderPickupTimes();
+}
 
-function changePassword(){
+async function changePassword(){
   const pw=document.getElementById('new-pw').value, msg=document.getElementById('pw-msg');
   if(pw.length<4){ msg.textContent='Lösenordet måste vara minst 4 tecken.'; msg.style.color='var(--danger)'; return; }
-  password=pw; save('bak_password',pw); document.getElementById('new-pw').value='';
+  password=pw;
+  lsave('bak_password',pw);
+  await saveSettingsToSheets();
+  document.getElementById('new-pw').value='';
   msg.textContent='✓ Lösenord sparat!'; msg.style.color='var(--success)';
   setTimeout(()=>msg.textContent='',3000);
 }
 
-// BACKUP & RESTORE
+// ── BACKUP & RESTORE ───────────────────────────────────────────
 function exportSettings(){
-  const data = {
-    version: 1,
-    exportedAt: new Date().toLocaleString('sv-SE'),
-    bakeryName,
-    products,
-    times,
-    activeDays,
-    password
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const data = { version:1, exportedAt:new Date().toLocaleString('sv-SE'), bakeryName, products, times, activeDays, password };
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download = `bageri-backup-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 }
-
-function importSettings(event){
-  const file = event.target.files[0];
-  if(!file) return;
+async function importSettings(event){
+  const file = event.target.files[0]; if(!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
     try {
       const data = JSON.parse(e.target.result);
       if(!data.version || !data.products) throw new Error('Ogiltig fil');
-      if(!confirm('Återställ alla inställningar från backupfilen? Nuvarande inställningar skrivs över.')) return;
-      if(data.bakeryName){ bakeryName=data.bakeryName; save('bak_name',bakeryName); document.getElementById('bakery-name').textContent=bakeryName; }
-      if(data.products){ products=data.products; save('bak_products',products); renderProducts(); }
-      if(data.times){ times=data.times; save('bak_times',times); renderPickupTimes(); }
-      if(data.activeDays){ activeDays=data.activeDays; save('bak_days',activeDays); initDatePicker(); }
-      if(data.password){ password=data.password; save('bak_password',password); }
+      if(!confirm('Återställ alla inställningar från backupfilen?')) return;
+      if(data.bakeryName){ bakeryName=data.bakeryName; lsave('bak_name',bakeryName); document.getElementById('bakery-name').textContent=bakeryName; }
+      if(data.products){ products=data.products; lsave('bak_products',products); await sheetsPost({action:'saveProducts',products}); renderProducts(); }
+      if(data.times){ times=data.times; lsave('bak_times',times); await sheetsPost({action:'saveTimes',times}); renderPickupTimes(); }
+      if(data.activeDays){ activeDays=data.activeDays; lsave('bak_days',activeDays); initDatePicker(); }
+      if(data.password){ password=data.password; lsave('bak_password',password); }
+      await saveSettingsToSheets();
       renderSettings();
       const msg = document.getElementById('import-msg');
       msg.textContent = `✓ Återställd från backup (${data.exportedAt})`;
-      msg.style.color = 'var(--success)';
-      msg.style.display = 'block';
+      msg.style.color = 'var(--success)'; msg.style.display = 'block';
       setTimeout(()=>msg.style.display='none', 4000);
     } catch(err) {
       const msg = document.getElementById('import-msg');
-      msg.textContent = '✗ Kunde inte läsa filen. Är det rätt backup-fil?';
-      msg.style.color = 'var(--danger)';
-      msg.style.display = 'block';
+      msg.textContent = '✗ Kunde inte läsa filen.';
+      msg.style.color = 'var(--danger)'; msg.style.display = 'block';
     }
     event.target.value = '';
   };
   reader.readAsText(file);
 }
 
-// INIT
-document.getElementById('bakery-name').textContent = bakeryName;
-renderProducts(); renderPickupTimes(); initDatePicker(); updateSubmitBtn();
+// ── INIT ───────────────────────────────────────────────────────
+loadFromSheets();
 </script>
 </body>
 </html>
