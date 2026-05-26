@@ -247,28 +247,26 @@ function loadAboutPhoto() {
 // ── PRODUCTS ───────────────────────────────────
 function renderProducts() {
   const grid = document.getElementById('products-grid');
-  const visibleProducts = products.filter(p => p.id > 0);
+  const visibleProducts = products.filter(p => p.id > 0 && p.active !== false && p.active !== 'FALSE');
   if (!visibleProducts.length) { grid.innerHTML = '<p style="color:var(--muted);font-style:italic">Inga produkter tillgängliga just nu.</p>'; return; }
   grid.innerHTML = visibleProducts.map(p => {
-    const qty        = cart[p.id] || 0;
-    const orderOnly  = p.orderOnly === true || p.orderOnly === 'true' || p.orderOnly === 'TRUE';
-    const hasSale    = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
-    const priceHtml  = hasSale
+    const qty     = cart[p.id] || 0;
+    const hasSale = p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
+    const priceHtml = hasSale
       ? `<span class="product-price-original">${p.price} kr</span><span class="product-price-sale">${p.salePrice} kr/st</span><span class="sale-badge">Rea</span>`
       : `${p.price} kr/st`;
     const hasIngredients = p.ingredients && p.ingredients.trim();
-    const canAddMore = orderOnly ? true : qty < p.stock;
     return `<div class="product-card">
       <div class="product-card-main">
         <div class="product-info">
           <div class="product-name">${p.name}</div>
           <div class="product-price">${priceHtml}</div>
-          <div class="product-stock">${orderOnly ? 'På beställning' : `Kvar: ${p.stock - qty} st`}</div>
+          <div class="product-stock">På beställning</div>
         </div>
         <div class="qty-control">
           <button class="qty-btn" onclick="changeQty(${p.id},-1)" ${qty === 0 ? 'disabled' : ''}>−</button>
           <span class="qty-num">${qty}</span>
-          <button class="qty-btn" onclick="changeQty(${p.id},1)" ${!canAddMore ? 'disabled' : ''}>+</button>
+          <button class="qty-btn" onclick="changeQty(${p.id},1)">+</button>
         </div>
       </div>
       ${hasIngredients ? `
@@ -288,10 +286,7 @@ function toggleIngredients(btn) {
 }
 
 function changeQty(id, delta) {
-  const p = products.find(x => x.id === id); if (!p) return;
-  const orderOnly = p.orderOnly === true || p.orderOnly === 'true' || p.orderOnly === 'TRUE';
-  const maxQty = orderOnly ? 999 : p.stock;
-  const next = Math.max(0, Math.min(maxQty, (cart[id] || 0) + delta));
+  const next = Math.max(0, (cart[id] || 0) + delta);
   if (next === 0) delete cart[id]; else cart[id] = next;
   renderProducts(); renderSummary(); updateSubmitBtn();
   if (Object.keys(cart).length > 0) document.getElementById('err-cart').classList.remove('show');
@@ -590,53 +585,54 @@ function clearAllOrders() {
 
 // ── ADMIN PRODUCTS ─────────────────────────────
 function renderAdminProducts() {
-  document.getElementById('products-manage-list').innerHTML = products.filter(p => p.id > 0).map(p => `
-    <div class="product-manage-card">
+  const realProducts = products.filter(p => p.id > 0);
+  document.getElementById('products-manage-list').innerHTML = realProducts.map(p => {
+    const isActive = p.active !== false && p.active !== 'FALSE';
+    return `<div class="product-manage-card">
       <div class="product-manage-row">
-        <div class="form-group"><label>Namn</label><input type="text" id="pname-${p.id}" value="${p.name}" oninput="markDirty()"></div>
+        <div class="form-group" style="flex:2"><label>Namn</label><input type="text" id="pname-${p.id}" value="${p.name}" oninput="markDirty()"></div>
         <div class="form-group sm"><label>Pris (kr)</label><input type="number" id="pprice-${p.id}" value="${p.price}" min="0" oninput="markDirty()"></div>
         <div class="form-group sm"><label>Reapris (kr)</label><input type="number" id="psaleprice-${p.id}" value="${p.salePrice || ''}" min="0" placeholder="–" oninput="markDirty()"></div>
         <button class="btn-danger" onclick="removeProduct(${p.id})">Ta bort</button>
       </div>
-      <div class="product-manage-row" style="margin-top:0.75rem">
-        <div class="form-group">
-          <label>Beställningstyp</label>
-          <select id="porderonly-${p.id}" oninput="markDirty(); toggleStockField(${p.id})">
-            <option value="true"  ${(p.orderOnly === true || p.orderOnly === 'true' || p.orderOnly === 'TRUE') ? 'selected' : ''}>På beställning</option>
-            <option value="false" ${(!p.orderOnly || p.orderOnly === 'false' || p.orderOnly === 'FALSE') ? 'selected' : ''}>Lagersaldo</option>
-          </select>
-        </div>
-        <div class="form-group sm" id="pstock-wrap-${p.id}" style="${(p.orderOnly === true || p.orderOnly === 'true' || p.orderOnly === 'TRUE') ? 'opacity:0.35;pointer-events:none' : ''}">
-          <label>Lager (st)</label>
-          <input type="number" id="pstock-${p.id}" value="${p.stock}" min="0" oninput="markDirty()">
+      <div class="product-manage-row" style="margin-top:0.75rem;align-items:center">
+        <div style="display:flex;align-items:center;gap:0.75rem;flex:1">
+          <label class="toggle-switch" style="margin:0">
+            <input type="checkbox" id="pactive-${p.id}" ${isActive ? 'checked' : ''} onchange="markDirty()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="font-size:0.88rem;color:var(--text);font-weight:500" id="pactive-label-${p.id}">${isActive ? 'Aktiv — syns för kunder' : 'Inaktiv — döljs för kunder'}</span>
         </div>
       </div>
       <div class="form-group" style="margin-top:0.75rem;margin-bottom:0">
-        <label>Ingredienser <span style="font-weight:300;text-transform:none;letter-spacing:0">(fällbar lista)</span></label>
+        <label>Ingredienser <span style="font-weight:300;text-transform:none;letter-spacing:0">(valfritt, fällbar lista)</span></label>
         <textarea id="pingredients-${p.id}" rows="3" placeholder="T.ex. Surdeg på fullkornsrismjöl…" oninput="markDirty()">${p.ingredients || ''}</textarea>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   document.getElementById('unsaved-banner').classList.remove('show');
-}
 
-function toggleStockField(id) {
-  const isOrderOnly = document.getElementById('porderonly-' + id)?.value === 'true';
-  const wrap = document.getElementById('pstock-wrap-' + id);
-  if (wrap) { wrap.style.opacity = isOrderOnly ? '0.35' : '1'; wrap.style.pointerEvents = isOrderOnly ? 'none' : 'auto'; }
+  // Live label update on toggle
+  realProducts.forEach(p => {
+    const cb = document.getElementById('pactive-' + p.id);
+    const lbl = document.getElementById('pactive-label-' + p.id);
+    if (cb && lbl) cb.addEventListener('change', () => {
+      lbl.textContent = cb.checked ? 'Aktiv — syns för kunder' : 'Inaktiv — döljs för kunder';
+    });
+  });
 }
 function markDirty() { document.getElementById('unsaved-banner').classList.add('show'); }
 function addProductRow() { const id = Date.now(); products.push({ id, name: '', price: 0, salePrice: 0, stock: 0, ingredients: '' }); renderAdminProducts(); markDirty(); document.getElementById('pname-' + id)?.focus(); }
 function removeProduct(id) { if (!confirm('Ta bort produkten?')) return; products = products.filter(p => p.id !== id); renderAdminProducts(); markDirty(); }
 async function saveProducts() {
   products = products.filter(p => p.id > 0).map(p => {
-    const name         = document.getElementById('pname-'       + p.id)?.value.trim() || p.name;
-    const price        = parseInt(document.getElementById('pprice-'      + p.id)?.value) || 0;
-    const salePriceRaw = document.getElementById('psaleprice-'  + p.id)?.value;
-    const salePrice    = salePriceRaw !== '' && salePriceRaw !== undefined ? parseInt(salePriceRaw) || 0 : 0;
-    const stock        = parseInt(document.getElementById('pstock-'      + p.id)?.value) || 0;
-    const ingredients  = document.getElementById('pingredients-'+ p.id)?.value.trim() || '';
-    const orderOnly    = document.getElementById('porderonly-'  + p.id)?.value === 'true';
-    return { id: p.id, name, price, salePrice, stock, ingredients, orderOnly };
+    const name        = document.getElementById('pname-'       + p.id)?.value.trim() || p.name;
+    const price       = parseInt(document.getElementById('pprice-'     + p.id)?.value) || 0;
+    const salePriceRaw = document.getElementById('psaleprice-' + p.id)?.value;
+    const salePrice   = salePriceRaw ? parseInt(salePriceRaw) || 0 : 0;
+    const ingredients = document.getElementById('pingredients-'+ p.id)?.value.trim() || '';
+    const active      = document.getElementById('pactive-'     + p.id)?.checked !== false;
+    return { id: p.id, name, price, salePrice, ingredients, active };
   }).filter(p => p.name);
   lsave('bak_products', products);
   await sheetsPost({ action: 'saveProducts', products });
